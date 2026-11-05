@@ -1,0 +1,40 @@
+appId: com.dawnstudio.invoicing
+productName: Invoicing
+copyright: Copyright © 2026 Dawn Studio
+directories:
+  buildResources: build
+  output: release
+files:
+  - out/**
+asar: true
+# Lock down Electron runtime switches: no running the binary as plain Node, no inspector flags,
+# and only load (integrity-checked) code from app.asar.
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+mac:
+  category: public.app-category.business
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  # Ad-hoc signature until there is an Apple Developer ID; no notarization.
+  # Hardened runtime only matters for notarization and breaks ad-hoc signed apps.
+  identity: "-"
+  hardenedRuntime: false
+  notarize: false
+dmg:
+  artifactName: ${productName}-${version}-${arch}.${ext}
+win:
+  target: [nsis]
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-${version}-setup.${ext}
+linux:
+  target: [AppImage, deb]
+  category: Office
+  maintainer: Dawn Studio

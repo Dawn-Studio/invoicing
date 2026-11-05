@@ -1,0 +1,37 @@
+{
+	"name": "@dawnstudio/desktop",
+	"productName": "Invoicing",
+	"version": "0.0.1",
+	"private": true,
+	"description": "Invoicing by Dawn Studio",
+	"author": "Dawn Studio",
+	"main": "./out/main/index.js",
+	"scripts": {
+		"dev": "electron-vite dev",
+		"build": "electron-vite build",
+		"preview": "electron-vite preview",
+		"typecheck": "tsc --noEmit -p tsconfig.node.json --composite false && tsc --noEmit -p tsconfig.web.json --composite false",
+		"package:mac": "electron-builder --mac",
+		"package:win": "electron-builder --win",
+		"package:linux": "electron-builder --linux"
+	},
+	"devDependencies": {
+		"@dawnstudio/config": "workspace:*",
+		"@dawnstudio/ui": "workspace:*",
+		"@tailwindcss/vite": "^4.3.4",
+		"@types/node": "^24",
+		"@types/react": "^19.3.0",
+		"@types/react-dom": "^19.3.0",
+		"@vitejs/plugin-react": "^6.2.1",
+		"electron": "45.2.1",
+		"electron-builder": "^26.18.0",
+		"electron-vite": "^6.0.0",
+		"lucide-react": "^1.67.0",
+		"motion": "^14.9.0",
+		"react": "^19.3.1",
+		"react-dom": "^19.3.1",
+		"tailwindcss": "^4.3.4",
+		"typescript": "~6.0.3",
+		"vite": "^8.3.5"
+	}
+}

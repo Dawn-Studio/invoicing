@@ -1,0 +1,9 @@
+{
+	"extends": "@dawnstudio/config/tsconfig.react.json",
+	"compilerOptions": {
+		"composite": true,
+		"tsBuildInfoFile": "./node_modules/.cache/tsconfig.web.tsbuildinfo",
+		"types": ["vite/client"]
+	},
+	"include": ["src/renderer/src", "src/shared"]
+}

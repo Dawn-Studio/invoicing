@@ -1,0 +1,32 @@
+{
+	"$schema": "https://turborepo.com/schema.json",
+	"ui": "tui",
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"outputs": ["dist/**", "out/**"]
+		},
+		"typecheck": {
+			"dependsOn": ["^typecheck"]
+		},
+		"test": {
+			"dependsOn": ["^build"]
+		},
+		"dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"package:mac": {
+			"dependsOn": ["build"],
+			"cache": false
+		},
+		"package:win": {
+			"dependsOn": ["build"],
+			"cache": false
+		},
+		"package:linux": {
+			"dependsOn": ["build"],
+			"cache": false
+		}
+	}
+}

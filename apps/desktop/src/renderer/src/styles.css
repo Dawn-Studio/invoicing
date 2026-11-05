@@ -1,0 +1,22 @@
+@import "@dawnstudio/ui/globals.css";
+
+@source "./";
+
+/* Frameless title bar: mark areas the user can drag the window by. */
+@utility app-drag {
+	-webkit-app-region: drag;
+	app-region: drag;
+}
+
+@utility app-no-drag {
+	-webkit-app-region: no-drag;
+	app-region: no-drag;
+}
+
+@layer base {
+	html,
+	body,
+	#root {
+		@apply h-full overflow-hidden select-none;
+	}
+}

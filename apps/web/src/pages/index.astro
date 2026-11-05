@@ -1,0 +1,18 @@
+---
+import { Hero } from "../components/hero";
+import BaseLayout from "../layouts/base-layout.astro";
+---
+
+<BaseLayout
+	title="Invoicing by Dawn Studio"
+	description="A local-first desktop app for creating, branding and storing invoices."
+>
+	<header class="border-b">
+		<div class="mx-auto flex h-14 max-w-5xl items-center px-4">
+			<span class="text-sm font-semibold tracking-tight">Invoicing</span>
+		</div>
+	</header>
+	<main>
+		<Hero client:load />
+	</main>
+</BaseLayout>

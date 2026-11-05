@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - electron
+  - esbuild
+  - sharp
+
+# Only used for Squirrel.Windows; we ship NSIS installers.
+ignoredBuiltDependencies:
+  - electron-winstaller

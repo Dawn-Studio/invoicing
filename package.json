@@ -1,0 +1,26 @@
+{
+	"name": "invoicing",
+	"private": true,
+	"packageManager": "pnpm@10.23.0",
+	"engines": {
+		"node": ">=22.23.4"
+	},
+	"scripts": {
+		"dev": "turbo run dev",
+		"dev:desktop": "turbo run dev --filter=@dawnstudio/desktop",
+		"dev:web": "turbo run dev --filter=@dawnstudio/web",
+		"build": "turbo run build",
+		"typecheck": "turbo run typecheck",
+		"test": "turbo run test",
+		"lint": "biome check .",
+		"format": "biome check --write .",
+		"package:mac": "turbo run package:mac --filter=@dawnstudio/desktop",
+		"package:win": "turbo run package:win --filter=@dawnstudio/desktop",
+		"package:linux": "turbo run package:linux --filter=@dawnstudio/desktop"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.6.4",
+		"turbo": "^2.11.10",
+		"typescript": "~6.0.3"
+	}
+}

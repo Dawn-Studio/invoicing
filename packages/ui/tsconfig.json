@@ -1,0 +1,9 @@
+{
+	"extends": "@dawnstudio/config/tsconfig.react.json",
+	"compilerOptions": {
+		"paths": {
+			"@dawnstudio/ui/*": ["./src/*"]
+		}
+	},
+	"include": ["src"]
+}
