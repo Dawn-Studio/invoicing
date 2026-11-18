@@ -91,15 +91,15 @@ Get the invoice to the client with as little friction as possible, without integ
 - ✅ Copy invoice summary to clipboard (number, amount, due date, payment details)
 - ✅ "Mark as sent" after the email opens records it in the activity (the app can't see the email client); overdue invoices get "Send reminder" with the reminder template
 
-### E7 · Invoice management 🟡
+### E7 · Invoice management ✅
 
 Find any invoice and know its state at a glance.
 
-- ✅ Invoice list: status, client, number, dates, amount, currency; search by number or client
-- ⬜ Filters (status, client, period, currency) and search (number, client, line text)
+- ✅ Invoice list: status, client, number, dates, amount, currency; outstanding total per currency for the current view
+- ✅ Status tabs with counts (All, Drafts, Open, Overdue, Paid, Void), filters for client, period (this/last month, quarter, year) and currency, search by number, client or line item text; filters live in the URL so Back keeps them
 - ✅ Overdue derived from due date, with "due in N days" / "N days overdue" labels
-- ⬜ Bulk actions: export PDFs, mark paid
-- ⬜ Keyboard navigation and quick actions from the list
+- ✅ Bulk actions with a selection bar: mark paid today, export PDFs to a folder (drafts skipped, existing files never overwritten)
+- ✅ Keyboard (TanStack Hotkeys, `lib/hotkeys.ts`): J/K or arrows, Enter open, X select, ⌘A all, Esc clear, / search, P mark paid, E export; global C new invoice, G then D/I/C/T to navigate, ⌘, settings, ? shortcuts sheet
 
 ### E8 · Dashboard & reports ⬜
 
@@ -128,7 +128,7 @@ A fast, keyboard-friendly, native-feeling desktop app.
 - ✅ Sidebar layout, light/dark following the OS
 - ✅ Redesign: own brand (lime #8FFF4A, Be Vietnam Pro, rounded buttons; the user rejected pill buttons) on a Linear-inspired layout; glass sidebar (macOS vibrancy, Windows 11 acrylic), blurred sticky header and overlays, inset content card, status icons, Lucide icons throughout, "New invoice" button in the sidebar
 - ⬜ Command palette (⌘K): jump to client/invoice, create new
-- ⬜ Keyboard shortcuts (⌘N new invoice, ⌘E export, ⌘, settings)
+- 🟡 Keyboard shortcuts: app-wide set and `?` sheet done (see E7); editor shortcuts still to add
 - ⬜ Native menus (macOS app menu, Windows/Linux menu bar)
 - ⬜ Theme override (system / light / dark) in settings
 - ⬜ App icon and window polish (traffic lights, titlebar drag areas)

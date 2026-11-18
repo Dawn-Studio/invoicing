@@ -4,6 +4,7 @@ import { chooseCsvFile, chooseLogo, logoDataUrl } from "./files";
 import {
 	chooseExportFolder,
 	exportPdf,
+	exportPdfs,
 	getExportSettings,
 	printInvoice,
 	revealExported,
@@ -82,6 +83,8 @@ export function createHandlers(workspaces: WorkspaceManager): Handlers {
 		"invoices.removePayment": ({ id }) => repos().invoices.removePayment(id),
 		"invoices.markPaid": ({ id }) => repos().invoices.markPaid(id),
 		"invoices.exportPdf": ({ id }) => exportPdf(repos(), id),
+		"invoices.exportPdfs": ({ ids }) => exportPdfs(repos(), ids),
+		"invoices.markPaidMany": ({ ids }) => repos().invoices.markPaidMany(ids),
 		"invoices.print": ({ id }) => printInvoice(repos(), id),
 
 		"invoices.email": ({ id, ...request }) => prepareEmail(repos(), { id, ...request }),

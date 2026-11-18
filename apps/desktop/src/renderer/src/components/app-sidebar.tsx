@@ -12,6 +12,7 @@ import {
 	SidebarMenuItem,
 } from "@dawnstudio/ui/components/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@dawnstudio/ui/components/tooltip";
+import { useAppHotkeys } from "@tanstack/react-hotkeys";
 import {
 	FileText,
 	LayoutDashboard,
@@ -24,6 +25,7 @@ import {
 import { NavLink, useLocation } from "react-router";
 import { useStartInvoice } from "../features/invoices/use-start-invoice";
 import { WorkspaceSwitcher } from "../features/workspaces/workspace-switcher";
+import { Shortcut } from "./shortcut";
 
 interface NavEntry {
 	to: string;
@@ -60,6 +62,7 @@ function NavItem({ to, label, icon: Icon }: NavEntry) {
 /** Linear-style: workspace menu and a compose button on top, compact grouped navigation. */
 export function AppSidebar() {
 	const start = useStartInvoice();
+	const hotkeys = useAppHotkeys();
 	return (
 		<Sidebar variant="inset" className="border-r-0">
 			{/* Room for the macOS traffic lights; the strip also drags the window. */}
@@ -81,7 +84,9 @@ export function AppSidebar() {
 							<SquarePen />
 						</Button>
 					</TooltipTrigger>
-					<TooltipContent side="right">New invoice</TooltipContent>
+					<TooltipContent side="right" className="flex items-center gap-2">
+						New invoice <Shortcut hotkey={hotkeys["invoice.new"].hotkey} />
+					</TooltipContent>
 				</Tooltip>
 			</SidebarHeader>
 			<SidebarContent className="gap-0">

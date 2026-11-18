@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
 	type Branding,
@@ -150,6 +150,53 @@ export async function exportPdf(
 	repos.invoices.recordExport(invoice.id, path.split(/[\\/]/).pop() ?? suggested);
 	exported.add(path);
 	return { path, fileName: path.split(/[\\/]/).pop() ?? suggested };
+}
+
+/**
+ * Bulk export: asks for a folder once, then writes one PDF per issued invoice (drafts are
+ * skipped). Existing files are never overwritten; a number is added instead.
+ */
+export async function exportPdfs(repos: Repositories, ids: string[]) {
+	const settings = getExportSettings(repos);
+	const window = BrowserWindow.getFocusedWindow();
+	const options = {
+		title: "Export PDFs to…",
+		buttonLabel: "Export here",
+		defaultPath: settings.folder,
+		properties: ["openDirectory", "createDirectory"] as ("openDirectory" | "createDirectory")[],
+	};
+	const result = window
+		? await dialog.showOpenDialog(window, options)
+		: await dialog.showOpenDialog(options);
+	const folder = result.canceled ? null : result.filePaths[0];
+	if (!folder) return null;
+
+	let exportedCount = 0;
+	let firstPath: string | null = null;
+	for (const id of ids) {
+		const invoice = repos.invoices.get(id);
+		if (!invoice.snapshot || !invoice.number) continue;
+		const name = exportFileName(settings.pattern, {
+			number: invoice.number,
+			client: invoice.snapshot.client.name,
+			date: invoice.issueDate,
+		});
+		const path = uniquePath(folder, name);
+		writeFileSync(path, await renderPdf(invoice));
+		repos.invoices.recordExport(id, path.split(/[\\/]/).pop() ?? name);
+		exported.add(path);
+		firstPath ??= path;
+		exportedCount++;
+	}
+	saveExportSettings(repos, { folder });
+	return { folder, firstPath, exported: exportedCount, skipped: ids.length - exportedCount };
+}
+
+function uniquePath(folder: string, fileName: string): string {
+	const base = fileName.replace(/\.pdf$/i, "");
+	let path = join(folder, fileName);
+	for (let n = 2; existsSync(path); n++) path = join(folder, `${base} (${n}).pdf`);
+	return path;
 }
 
 /** The system print dialog for an issued invoice. */

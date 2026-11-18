@@ -1,6 +1,7 @@
 import { SidebarInset, SidebarProvider } from "@dawnstudio/ui/components/sidebar";
 import { Navigate, Outlet } from "react-router";
 import { AppSidebar } from "./components/app-sidebar";
+import { GlobalHotkeys } from "./components/global-hotkeys";
 import { useProfile } from "./lib/queries";
 
 /** Screens with the sidebar. Until a business profile exists, everything goes to setup. */
@@ -11,6 +12,7 @@ export function AppLayout() {
 
 	return (
 		<SidebarProvider className="h-full min-h-0">
+			<GlobalHotkeys />
 			<AppSidebar />
 			<SidebarInset className="min-h-0 md:peer-data-[variant=inset]:my-1.5">
 				<Outlet />

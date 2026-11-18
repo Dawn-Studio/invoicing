@@ -370,6 +370,36 @@ describe("invoices", () => {
 		expect(repos.invoices.list({ search: "glob" })).toHaveLength(1);
 	});
 
+	it("filters by currency, period and line text", () => {
+		const { client } = setup();
+		const usd = fillDraft(client.id);
+		const eur = repos.invoices.createDraft({ clientId: client.id });
+		repos.invoices.updateDraft(eur.id, {
+			...eur,
+			currency: "EUR",
+			issueDate: "2026-01-15",
+			dueDate: "2026-01-29",
+			items: [{ description: "Logo refresh", quantity: 1_000, unitPrice: 50_000 }],
+		});
+
+		expect(repos.invoices.list({ currency: "EUR" }).map((i) => i.id)).toEqual([eur.id]);
+		expect(repos.invoices.list({ from: "2026-11-01", to: "2026-11-30" }).map((i) => i.id)).toEqual([
+			usd.id,
+		]);
+		expect(repos.invoices.list({ search: "logo" }).map((i) => i.id)).toEqual([eur.id]);
+		expect(repos.invoices.list({ search: "hosting" }).map((i) => i.id)).toEqual([usd.id]);
+	});
+
+	it("marks several invoices paid, skipping ones that aren't open", () => {
+		const { client } = setup();
+		const a = repos.invoices.issue(fillDraft(client.id).id);
+		const b = repos.invoices.issue(fillDraft(client.id).id);
+		const draft = fillDraft(client.id);
+		expect(repos.invoices.markPaidMany([a.id, b.id, draft.id])).toEqual({ paid: 2, skipped: 1 });
+		expect(repos.invoices.get(a.id).status).toBe("paid");
+		expect(repos.invoices.get(draft.id).status).toBe("draft");
+	});
+
 	it("protects clients that invoices refer to", () => {
 		const { client } = setup();
 		fillDraft(client.id);

@@ -15,6 +15,7 @@ import {
 	type InvoiceSummary,
 	idSchema,
 	invoiceDraftInputSchema,
+	isoDateSchema,
 	type Payment,
 	type PaymentAccount,
 	paymentAccountInputSchema,
@@ -163,6 +164,9 @@ export const contract = {
 			.object({
 				status: z.array(z.enum(INVOICE_STATUSES)).optional(),
 				clientId: idSchema.optional(),
+				currency: z.string().length(3).optional(),
+				from: isoDateSchema.optional(),
+				to: isoDateSchema.optional(),
 				search: z.string().max(200).optional(),
 			})
 			.optional(),
@@ -188,6 +192,21 @@ export const contract = {
 	},
 	/** `id` is the payment's. */
 	"invoices.removePayment": { input: byId, output: returns<Invoice>() },
+	/** Bulk "mark paid today"; invoices that aren't open are skipped. */
+	"invoices.markPaidMany": {
+		input: z.object({ ids: z.array(idSchema).min(1).max(500) }),
+		output: returns<{ paid: number; skipped: number }>(),
+	},
+	/** Asks for a folder and writes a PDF per issued invoice; null when cancelled. */
+	"invoices.exportPdfs": {
+		input: z.object({ ids: z.array(idSchema).min(1).max(500) }),
+		output: returns<{
+			folder: string;
+			firstPath: string | null;
+			exported: number;
+			skipped: number;
+		} | null>(),
+	},
 	/** One payment for the whole balance, dated today. */
 	"invoices.markPaid": { input: byId, output: returns<Invoice>() },
 	/** Renders the PDF and asks where to save it; null when cancelled. */

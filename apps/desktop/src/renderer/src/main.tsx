@@ -1,10 +1,12 @@
 import { Toaster } from "@dawnstudio/ui/components/sonner";
 import { TooltipProvider } from "@dawnstudio/ui/components/tooltip";
 import { syncThemeWithSystem } from "@dawnstudio/ui/lib/theme";
+import { HotkeysProvider } from "@tanstack/react-hotkeys";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
+import { appHotkeys } from "./lib/hotkeys";
 import { router } from "./router";
 import "./styles.css";
 
@@ -26,7 +28,9 @@ createRoot(root).render(
 	<StrictMode>
 		<QueryClientProvider client={queryClient}>
 			<TooltipProvider>
-				<RouterProvider router={router} />
+				<HotkeysProvider appHotkeys={appHotkeys}>
+					<RouterProvider router={router} />
+				</HotkeysProvider>
 				<Toaster position="bottom-right" />
 			</TooltipProvider>
 		</QueryClientProvider>

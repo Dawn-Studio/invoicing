@@ -16,7 +16,7 @@ import {
 	type PaymentInput,
 	paymentInputSchema,
 } from "@dawnstudio/core";
-import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, exists, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { clients, invoiceEvents, invoiceItems, invoices, payments, taxRates } from "../schema";
 import { clientRepository } from "./clients";
 import { likePattern, notFound, type RepositoryContext } from "./context";
@@ -26,7 +26,11 @@ import { profileRepository } from "./profile";
 export interface InvoiceListOptions {
 	status?: InvoiceStatus[];
 	clientId?: string;
-	/** Matches invoice number or client name. */
+	currency?: string;
+	/** Issue date range, inclusive (ISO dates). */
+	from?: string;
+	to?: string;
+	/** Matches invoice number, client name or line item text. */
 	search?: string;
 }
 
@@ -123,7 +127,14 @@ export function invoiceRepository(ctx: RepositoryContext) {
 	return {
 		get,
 
-		list({ status, clientId, search }: InvoiceListOptions = {}): InvoiceSummary[] {
+		list({
+			status,
+			clientId,
+			currency,
+			from,
+			to,
+			search,
+		}: InvoiceListOptions = {}): InvoiceSummary[] {
 			const term = search?.trim();
 			const pattern = term ? likePattern(term) : null;
 			const rows = db
@@ -147,10 +158,25 @@ export function invoiceRepository(ctx: RepositoryContext) {
 					and(
 						status && status.length > 0 ? inArray(invoices.status, status) : undefined,
 						clientId ? eq(invoices.clientId, clientId) : undefined,
+						currency ? eq(invoices.currency, currency) : undefined,
+						from ? gte(invoices.issueDate, from) : undefined,
+						to ? lte(invoices.issueDate, to) : undefined,
 						pattern
 							? or(
 									sql`${invoices.number} LIKE ${pattern} ESCAPE '\\'`,
 									sql`${clients.name} LIKE ${pattern} ESCAPE '\\'`,
+									sql`json_extract(${invoices.snapshot}, '$.client.name') LIKE ${pattern} ESCAPE '\\'`,
+									exists(
+										db
+											.select({ one: sql`1` })
+											.from(invoiceItems)
+											.where(
+												and(
+													eq(invoiceItems.invoiceId, invoices.id),
+													sql`${invoiceItems.description} LIKE ${pattern} ESCAPE '\\'`,
+												),
+											),
+									),
 								)
 							: undefined,
 					),
@@ -381,6 +407,23 @@ export function invoiceRepository(ctx: RepositoryContext) {
 					.run();
 				recordEvent(id, "voided", reason ? { reason } : {});
 				return get(id);
+			});
+		},
+
+		/**
+		 * Marks several invoices paid today (one payment each for the balance). Invoices that
+		 * aren't open are skipped, not errors, so a mixed selection still works.
+		 */
+		markPaidMany(ids: string[]): { paid: number; skipped: number } {
+			return db.transaction(() => {
+				let paid = 0;
+				for (const id of ids) {
+					const row = db.select().from(invoices).where(eq(invoices.id, id)).get();
+					if (row?.status !== "issued") continue;
+					this.recordPayment(id, { amount: row.total - row.amountPaid, date: today() });
+					paid++;
+				}
+				return { paid, skipped: ids.length - paid };
 			});
 		},
 

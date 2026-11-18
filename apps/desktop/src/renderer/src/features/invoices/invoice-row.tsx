@@ -60,7 +60,21 @@ export function StatusBadge({ status, className }: { status: DisplayStatus; clas
 	);
 }
 
-/** One invoice in a list: number and status, client and dates, amount. Opens the invoice. */
+/** "Due in 3 days", "5 days overdue", "Paid", … for an invoice's status. */
+export function dueText(
+	invoice: Pick<InvoiceSummary, "status" | "dueDate" | "amountPaid">,
+	today: string,
+): string {
+	if (invoice.status === "draft") return "Draft";
+	if (invoice.status === "paid") return "Paid";
+	if (invoice.status === "void") return "Void";
+	const days = Math.round((Date.parse(invoice.dueDate) - Date.parse(today)) / 86_400_000);
+	if (days === 0) return "Due today";
+	if (days > 0) return `Due in ${days} ${days === 1 ? "day" : "days"}`;
+	return `${-days} ${days === -1 ? "day" : "days"} overdue`;
+}
+
+/** One invoice in a client's list: number and status, dates, amount. Opens the invoice. */
 export function InvoiceRow({
 	invoice,
 	today,
