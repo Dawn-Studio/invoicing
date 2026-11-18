@@ -17,6 +17,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
 		<Sonner
 			theme={theme as ToasterProps["theme"]}
 			className="toaster group"
+			toastOptions={{
+				classNames: { toast: "backdrop-blur-2xl backdrop-saturate-[1.8] !shadow-lg" },
+			}}
 			icons={{
 				success: <CircleCheckIcon className="size-4" />,
 				info: <InfoIcon className="size-4" />,
@@ -26,7 +29,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 			}}
 			style={
 				{
-					"--normal-bg": "var(--popover)",
+					"--normal-bg": "color-mix(in oklab, var(--popover) 72%, transparent)",
 					"--normal-text": "var(--popover-foreground)",
 					"--normal-border": "var(--border)",
 					"--border-radius": "var(--radius)",

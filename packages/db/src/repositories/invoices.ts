@@ -384,6 +384,20 @@ export function invoiceRepository(ctx: RepositoryContext) {
 			});
 		},
 
+		/** Notes in the timeline that the invoice (or a reminder) was emailed. */
+		recordSent(id: string, details: { to: string; reminder: boolean }): void {
+			const row = findRow(id);
+			if (!row.number)
+				throw new DomainError("INVALID_STATE", "Issue the invoice before sending it");
+			recordEvent(id, "sent", details);
+		},
+
+		/** Notes a PDF export in the timeline. */
+		recordExport(id: string, fileName: string): void {
+			findRow(id);
+			recordEvent(id, "exported", { fileName });
+		},
+
 		events(invoiceId: string): InvoiceEvent[] {
 			return db
 				.select()

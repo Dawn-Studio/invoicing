@@ -71,25 +71,25 @@ Issued invoices are legal documents: numbered, frozen, auditable.
 - ✅ Activity timeline from `invoice_events`
 - 🔮 Credit notes linked to the original invoice
 
-### E5 · Branding, templates & PDF 🟡
+### E5 · Branding, templates & PDF ✅
 
 Invoices that look like your studio, identical on screen and in the PDF.
 
-- 🟡 `packages/invoice-templates`: "Classic" template done (A4, React, shared by preview and PDF); 1–2 more to add
-- ⬜ Branding settings: accent colour, font, template, logo placement, footer text
-- ⬜ PDF export via hidden window + `printToPDF`; A4 / Letter
-- ⬜ Save dialog, default export folder, file name pattern, reveal in Finder
-- ⬜ Snapshot stores the branding/template version so old invoices never change
-- ⬜ Print
+- ✅ `packages/invoice-templates`: Classic, Modern and Minimal (React, shared by the live preview and the PDF); shared parts in `parts.tsx`
+- ✅ Branding settings: template cards with live previews of your invoice, accent colour (swatches + any hex), font (sans / serif / mono), logo left or right, footer text
+- ✅ PDF export via a hidden window on the `/print/:id` route + `printToPDF`; A4 / Letter (paper size is part of branding)
+- ✅ Save dialog opening in the last-used folder (or one set in Settings), file name pattern (`{number} {client}`, `{date}`), "Show in Finder" after saving, "Exported …" in the activity
+- ✅ Snapshot stores the branding (template id, colour, font, paper, footer); older snapshots get defaults for newer fields; template ids are never reshaped, new looks get new ids
+- ✅ Print… (system print dialog, same rendering as the PDF)
 
-### E6 · Sending & sharing ⬜
+### E6 · Sending & sharing ✅
 
 Get the invoice to the client with as little friction as possible, without integrations.
 
-- ⬜ "Send" action: export PDF + open a pre-filled email (macOS Mail / share sheet, Windows/Linux fallback)
-- ⬜ Email message templates with variables (`{client.name}`, `{invoice.number}`, `{invoice.total}`, `{invoice.dueDate}`)
-- ⬜ Copy invoice summary to clipboard
-- ⬜ Record "sent" in the timeline; reminders for overdue invoices use the same flow
+- ✅ "Send" action: PDF written to an outbox, then an Apple Mail draft with it attached (macOS, via AppleScript; needs the Automation permission once) or the default email app via mailto (all platforms) with the PDF shown in the file manager. To = client email, CC = the client's other contacts (toggle each)
+- ✅ Email templates in Settings (invoice and payment reminder) with variables `{client.name}`, `{client.contact}`, `{invoice.number}`, `{invoice.total}`, `{invoice.balance}`, `{invoice.dueDate}`, `{business.name}`
+- ✅ Copy invoice summary to clipboard (number, amount, due date, payment details)
+- ✅ "Mark as sent" after the email opens records it in the activity (the app can't see the email client); overdue invoices get "Send reminder" with the reminder template
 
 ### E7 · Invoice management 🟡
 
@@ -125,7 +125,8 @@ Local-first means the user's data must never be lost.
 
 A fast, keyboard-friendly, native-feeling desktop app.
 
-- ✅ Sidebar layout, light/dark following the OS, reference-style panels
+- ✅ Sidebar layout, light/dark following the OS
+- ✅ Redesign: own brand (lime #8FFF4A, Be Vietnam Pro, rounded buttons; the user rejected pill buttons) on a Linear-inspired layout; glass sidebar (macOS vibrancy, Windows 11 acrylic), blurred sticky header and overlays, inset content card, status icons, Lucide icons throughout, "New invoice" button in the sidebar
 - ⬜ Command palette (⌘K): jump to client/invoice, create new
 - ⬜ Keyboard shortcuts (⌘N new invoice, ⌘E export, ⌘, settings)
 - ⬜ Native menus (macOS app menu, Windows/Linux menu bar)

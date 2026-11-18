@@ -43,7 +43,7 @@ export function WelcomePage() {
 	const finish = () => navigate("/", { replace: true });
 
 	return (
-		<div className="h-full overflow-y-auto">
+		<div className="h-full overflow-y-auto bg-background">
 			<div className="app-drag flex h-13 shrink-0 items-center justify-end px-4">
 				<SetupWorkspaceSwitch />
 			</div>
@@ -58,7 +58,7 @@ export function WelcomePage() {
 						className="flex flex-col gap-3"
 					>
 						<PageSection className="flex flex-col gap-3 pt-6 pb-6">
-							<span className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
+							<span className="text-xs text-muted-foreground">
 								Step {step === "business" ? 1 : 2} of 2
 							</span>
 							<h1 className="text-4xl font-medium tracking-tight">

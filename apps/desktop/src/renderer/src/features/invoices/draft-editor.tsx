@@ -421,7 +421,7 @@ export function DraftEditor({ invoice }: { invoice: Invoice }) {
 				</div>
 
 				<CatalogItemDialog state={itemDialog} onClose={() => setItemDialog({ mode: "closed" })} />
-				<PageSection className="@3xl:sticky @3xl:top-2">
+				<PageSection className="@3xl:sticky @3xl:top-14">
 					{preview ? <InvoicePreview invoice={preview} logoSrc={logo} draft /> : null}
 				</PageSection>
 			</div>

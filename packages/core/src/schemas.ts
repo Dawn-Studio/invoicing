@@ -33,14 +33,29 @@ export const addressSchema = z.object({
 });
 export type Address = z.infer<typeof addressSchema>;
 
+export const TEMPLATES = ["classic", "modern", "minimal"] as const;
+export const FONTS = ["sans", "serif", "mono"] as const;
+export const PAPER_SIZES = ["a4", "letter"] as const;
+
+/**
+ * How invoices look. Every field has a default so branding saved by older versions (and
+ * frozen in older snapshots) still parses.
+ */
 export const brandingSchema = z.object({
 	accentColor: z
 		.string()
 		.regex(/^#[0-9a-fA-F]{6}$/, "Expected a hex colour like #4f46e5")
 		.default("#4f46e5"),
+	/** Unknown ids (e.g. from a newer version) fall back to the default template. */
 	template: text(50).default("classic"),
+	font: z.enum(FONTS).catch("sans").default("sans"),
+	logoPosition: z.enum(["left", "right"]).catch("left").default("left"),
+	paperSize: z.enum(PAPER_SIZES).catch("a4").default("a4"),
+	/** Small print at the bottom of every invoice, e.g. company registration details. */
+	footer: text(500).default(""),
 });
 export type Branding = z.infer<typeof brandingSchema>;
+export type BrandingInput = z.input<typeof brandingSchema>;
 
 export const profileInputSchema = z.object({
 	name: text().min(1, "Business name is required"),

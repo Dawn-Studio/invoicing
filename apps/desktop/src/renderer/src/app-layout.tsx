@@ -12,7 +12,7 @@ export function AppLayout() {
 	return (
 		<SidebarProvider className="h-full min-h-0">
 			<AppSidebar />
-			<SidebarInset className="min-h-0">
+			<SidebarInset className="min-h-0 md:peer-data-[variant=inset]:my-1.5">
 				<Outlet />
 			</SidebarInset>
 		</SidebarProvider>

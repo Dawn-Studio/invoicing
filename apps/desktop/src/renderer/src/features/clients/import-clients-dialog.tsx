@@ -139,7 +139,7 @@ export function ImportClientsDialog({
 					<div className="flex min-w-0 flex-col gap-3">
 						<div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
 							<span className="truncate font-medium">{loaded.fileName}</span>
-							<span className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
+							<span className="text-xs text-muted-foreground">
 								{joinParts(
 									`${count("new")} new`,
 									count("exists") ? `${count("exists")} already added` : null,
@@ -173,7 +173,7 @@ export function ImportClientsDialog({
 									</div>
 									<span
 										className={cn(
-											"shrink-0 font-mono text-xs tracking-wider uppercase",
+											"shrink-0 text-xs",
 											row.status === "error" ? "text-destructive" : "text-muted-foreground",
 										)}
 									>

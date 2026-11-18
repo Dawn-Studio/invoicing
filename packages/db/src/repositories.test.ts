@@ -437,3 +437,35 @@ describe("catalog", () => {
 		expect(repos.catalog.list()).toHaveLength(2);
 	});
 });
+
+describe("branding", () => {
+	it("keeps branding apart from the profile details and fills defaults", () => {
+		repos.profile.save(profileInput);
+		expect(repos.profile.get()?.branding).toMatchObject({ template: "classic", paperSize: "a4" });
+		repos.profile.setBranding({ accentColor: "#112233", template: "modern", paperSize: "letter" });
+		// Saving the details form (with its older copy of branding) leaves branding alone.
+		const saved = repos.profile.save({ ...profileInput, branding: { accentColor: "#000000" } });
+		expect(saved.branding).toMatchObject({
+			accentColor: "#112233",
+			template: "modern",
+			paperSize: "letter",
+			font: "sans",
+			footer: "",
+		});
+	});
+
+	it("reads branding saved before the newer fields existed", () => {
+		repos.profile.save(profileInput);
+		database.db.run(
+			sql`UPDATE business_profiles SET branding = '{"accentColor":"#4f46e5","template":"classic"}'`,
+		);
+		expect(repos.profile.get()?.branding).toEqual({
+			accentColor: "#4f46e5",
+			template: "classic",
+			font: "sans",
+			logoPosition: "left",
+			paperSize: "a4",
+			footer: "",
+		});
+	});
+});

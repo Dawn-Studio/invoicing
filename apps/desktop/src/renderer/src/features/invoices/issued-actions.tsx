@@ -1,4 +1,4 @@
-import type { Invoice } from "@dawnstudio/core";
+import { type Invoice, invoiceSummary, todayIso } from "@dawnstudio/core";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -18,23 +18,50 @@ import {
 } from "@dawnstudio/ui/components/dropdown-menu";
 import { Spinner } from "@dawnstudio/ui/components/spinner";
 import { Textarea } from "@dawnstudio/ui/components/textarea";
-import { Ban, CircleCheck, Copy, Ellipsis, Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+	Ban,
+	CircleCheck,
+	ClipboardCopy,
+	Copy,
+	Ellipsis,
+	FileDown,
+	Plus,
+	Printer,
+	Send,
+} from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { showSaveError } from "../../lib/forms";
 import { useDuplicateInvoice, useMarkPaid, useVoidInvoice } from "../../lib/queries";
+import { rpc } from "../../lib/rpc";
 import { PaymentDialog } from "./payment-dialog";
+import { SendDialog } from "./send-dialog";
+
+const revealLabel = window.api.platform === "darwin" ? "Show in Finder" : "Show in folder";
 
 /** Header actions on an issued invoice: record payments, duplicate, void. */
 export function IssuedActions({ invoice }: { invoice: Invoice }) {
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 	const duplicate = useDuplicateInvoice();
 	const markPaid = useMarkPaid();
 	const voidInvoice = useVoidInvoice();
-	const [dialog, setDialog] = useState<"payment" | "void" | null>(null);
+	const [dialog, setDialog] = useState<"payment" | "void" | "send" | null>(null);
+
+	const onCopySummary = async () => {
+		if (!invoice.snapshot) return;
+		try {
+			await navigator.clipboard.writeText(invoiceSummary(invoice.snapshot, invoice.amountPaid));
+			toast.success("Summary copied");
+		} catch (error) {
+			showSaveError(error);
+		}
+	};
 	const [reason, setReason] = useState("");
 	const open = invoice.status === "issued";
+	const overdue = open && invoice.dueDate < todayIso();
 
 	const onDuplicate = async () => {
 		try {
@@ -45,6 +72,29 @@ export function IssuedActions({ invoice }: { invoice: Invoice }) {
 			showSaveError(error);
 		}
 	};
+
+	const [exporting, setExporting] = useState(false);
+	const onExport = async () => {
+		setExporting(true);
+		try {
+			const saved = await rpc("invoices.exportPdf", { id: invoice.id });
+			if (saved) {
+				void queryClient.invalidateQueries({ queryKey: ["invoices", "events"] });
+				toast.success(`Saved ${saved.fileName}`, {
+					action: {
+						label: revealLabel,
+						onClick: () => void rpc("files.reveal", { path: saved.path }).catch(showSaveError),
+					},
+				});
+			}
+		} catch (error) {
+			showSaveError(error);
+		} finally {
+			setExporting(false);
+		}
+	};
+
+	const onPrint = () => void rpc("invoices.print", { id: invoice.id }).catch(showSaveError);
 
 	const onMarkPaid = async () => {
 		try {
@@ -80,6 +130,14 @@ export function IssuedActions({ invoice }: { invoice: Invoice }) {
 							Mark as paid today
 						</DropdownMenuItem>
 					) : null}
+					<DropdownMenuItem onSelect={onCopySummary}>
+						<ClipboardCopy />
+						Copy summary
+					</DropdownMenuItem>
+					<DropdownMenuItem onSelect={onPrint}>
+						<Printer />
+						Print…
+					</DropdownMenuItem>
 					<DropdownMenuItem onSelect={onDuplicate}>
 						<Copy />
 						Duplicate
@@ -99,18 +157,29 @@ export function IssuedActions({ invoice }: { invoice: Invoice }) {
 					) : null}
 				</DropdownMenuContent>
 			</DropdownMenu>
+			<Button size="sm" variant="outline" onClick={onExport} disabled={exporting}>
+				{exporting ? <Spinner /> : <FileDown />}
+				Export PDF
+			</Button>
+			{invoice.status !== "void" ? (
+				<Button size="sm" variant="outline" onClick={() => setDialog("send")}>
+					<Send />
+					{overdue ? "Send reminder" : "Send"}
+				</Button>
+			) : null}
 			{open ? (
 				<Button size="sm" onClick={() => setDialog("payment")}>
 					<Plus />
 					Record payment
 				</Button>
-			) : (
-				<Button size="sm" variant="outline" onClick={onDuplicate} disabled={duplicate.isPending}>
-					{duplicate.isPending ? <Spinner /> : <Copy />}
-					Duplicate
-				</Button>
-			)}
+			) : null}
 
+			<SendDialog
+				invoice={invoice}
+				reminder={overdue}
+				open={dialog === "send"}
+				onOpenChange={(next) => setDialog(next ? "send" : null)}
+			/>
 			<PaymentDialog
 				invoice={invoice}
 				open={dialog === "payment"}

@@ -15,25 +15,28 @@ interface PageProps {
 	className?: string;
 }
 
-/** A routed screen: title bar (doubles as the window drag area) and a scrolling column of panels. */
+/**
+ * A routed screen: a frosted title bar (also the window drag area) that content scrolls
+ * under, and a column of panels.
+ */
 export function Page({ title, back, actions, children, className }: PageProps) {
 	const { state } = useSidebar();
 	return (
-		<div className="flex h-full min-h-0 flex-col">
+		<div className="h-full min-h-0 overflow-y-auto" data-slot="page-scroll">
 			<header
 				className={cn(
-					"app-drag flex h-13 shrink-0 items-center gap-2 px-4",
+					"app-drag sticky top-0 z-20 flex h-11 shrink-0 items-center gap-2 border-b bg-background/70 px-3 backdrop-blur-2xl backdrop-saturate-[1.8]",
 					// With the sidebar hidden, the macOS traffic lights sit over the title bar.
 					state === "collapsed" && "in-data-[platform=darwin]:pl-22",
 				)}
 			>
-				<SidebarTrigger className="app-no-drag text-muted-foreground" />
-				<div className="flex min-w-0 items-center gap-1 text-sm">
+				<SidebarTrigger className="app-no-drag size-7 text-muted-foreground" />
+				<div className="flex min-w-0 items-center gap-1.5 text-[0.9375rem]">
 					{back ? (
 						<>
 							<Link
 								to={back.to}
-								className="app-no-drag flex items-center gap-0.5 text-muted-foreground hover:text-foreground"
+								className="app-no-drag flex items-center gap-0.5 rounded-md text-muted-foreground hover:text-foreground"
 							>
 								<ChevronLeft className="size-4" />
 								{back.label}
@@ -45,12 +48,12 @@ export function Page({ title, back, actions, children, className }: PageProps) {
 				</div>
 				<div className="app-no-drag ml-auto flex items-center gap-2">{actions}</div>
 			</header>
-			<main className="min-h-0 flex-1 overflow-y-auto">
+			<main>
 				<motion.div
 					variants={stagger(0.05)}
 					initial="hidden"
 					animate="visible"
-					className={cn("mx-auto flex max-w-3xl flex-col gap-3 px-6 pt-2 pb-10", className)}
+					className={cn("mx-auto flex max-w-3xl flex-col gap-6 px-6 pt-6 pb-12", className)}
 				>
 					{children}
 				</motion.div>

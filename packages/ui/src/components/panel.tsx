@@ -2,24 +2,18 @@ import { cn } from "@dawnstudio/ui/lib/utils";
 import type * as React from "react";
 
 /**
- * The main layout block: a recessed title strip (`PanelHeader`) over a lighter rounded body
- * (`PanelBody`), with an optional note underneath (`PanelFooter`).
+ * The main layout block, Linear-style: a small title row (`PanelHeader`) above a bordered
+ * card (`PanelBody`), with an optional note underneath (`PanelFooter`).
  */
 function Panel({ className, ...props }: React.ComponentProps<"section">) {
-	return (
-		<section
-			data-slot="panel"
-			className={cn("flex flex-col overflow-hidden rounded-xl border bg-panel-header", className)}
-			{...props}
-		/>
-	);
+	return <section data-slot="panel" className={cn("flex flex-col gap-2", className)} {...props} />;
 }
 
 function PanelHeader({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="panel-header"
-			className={cn("flex min-h-13 items-center justify-between gap-3 px-6 py-2.5", className)}
+			className={cn("flex min-h-8 items-center justify-between gap-3 px-1", className)}
 			{...props}
 		/>
 	);
@@ -29,18 +23,18 @@ function PanelTitle({ className, ...props }: React.ComponentProps<"h2">) {
 	return (
 		<h2
 			data-slot="panel-title"
-			className={cn("text-[0.9375rem] font-normal text-muted-foreground", className)}
+			className={cn("text-[0.9375rem] font-medium text-foreground", className)}
 			{...props}
 		/>
 	);
 }
 
-/** Small uppercase status text for the right side of a panel header, e.g. "DUE IN 4 DAYS". */
+/** Quiet status text for the right side of a panel header, e.g. "Due in 4 days". */
 function PanelLabel({ className, ...props }: React.ComponentProps<"span">) {
 	return (
 		<span
 			data-slot="panel-label"
-			className={cn("font-mono text-xs tracking-wider text-muted-foreground uppercase", className)}
+			className={cn("text-xs text-muted-foreground tabular-nums", className)}
 			{...props}
 		/>
 	);
@@ -51,7 +45,7 @@ function PanelBody({ className, ...props }: React.ComponentProps<"div">) {
 		<div
 			data-slot="panel-body"
 			className={cn(
-				"-mx-px -mb-px flex-1 rounded-xl border bg-panel px-6 py-5 first:-mt-px",
+				"flex-1 rounded-lg border bg-panel px-5 py-4 shadow-[0_1px_2px_rgb(0_0_0/0.03)] dark:shadow-none",
 				className,
 			)}
 			{...props}
@@ -63,7 +57,7 @@ function PanelFooter({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="panel-footer"
-			className={cn("px-6 py-4 text-sm text-muted-foreground", className)}
+			className={cn("px-1 text-sm text-muted-foreground", className)}
 			{...props}
 		/>
 	);
@@ -100,7 +94,7 @@ function RowList({ className, ...props }: React.ComponentProps<"ul">) {
 	return (
 		<ul
 			data-slot="row-list"
-			className={cn("-my-5 flex flex-col divide-y [&>li]:py-5", className)}
+			className={cn("-my-4 flex flex-col divide-y [&>li]:py-4", className)}
 			{...props}
 		/>
 	);

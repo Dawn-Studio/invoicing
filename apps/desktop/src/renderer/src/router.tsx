@@ -6,12 +6,14 @@ import { ClientsPage } from "./features/clients/clients-page";
 import { DashboardPage } from "./features/dashboard/dashboard-page";
 import { InvoicePage } from "./features/invoices/invoice-page";
 import { InvoicesPage } from "./features/invoices/invoices-page";
+import { PrintPage } from "./features/invoices/print-page";
 import { SettingsPage } from "./features/settings/settings-page";
 import { WelcomePage } from "./features/welcome/welcome-page";
 
 // Hash routing works with the file:// URL the packaged app loads from.
 export const router = createHashRouter([
 	{ path: "/welcome", element: <WelcomePage /> },
+	{ path: "/print/:id", element: <PrintPage /> },
 	{
 		element: <AppLayout />,
 		children: [

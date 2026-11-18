@@ -1,5 +1,14 @@
 import { app } from "electron";
+import { getEmailTemplates, prepareEmail, saveEmailTemplates } from "./email";
 import { chooseCsvFile, chooseLogo, logoDataUrl } from "./files";
+import {
+	chooseExportFolder,
+	exportPdf,
+	getExportSettings,
+	printInvoice,
+	revealExported,
+	saveExportSettings,
+} from "./pdf";
 import type { Handlers } from "./rpc";
 import type { WorkspaceManager } from "./workspaces";
 
@@ -26,6 +35,7 @@ export function createHandlers(workspaces: WorkspaceManager): Handlers {
 			const fileName = await chooseLogo();
 			return fileName ? repos().profile.setLogoFile(fileName) : null;
 		},
+		"profile.saveBranding": (input) => repos().profile.setBranding(input),
 		"profile.removeLogo": () => repos().profile.setLogoFile(null),
 		"profile.logo": () => {
 			const fileName = repos().profile.get()?.logoFile;
@@ -71,6 +81,19 @@ export function createHandlers(workspaces: WorkspaceManager): Handlers {
 		"invoices.recordPayment": ({ id, data }) => repos().invoices.recordPayment(id, data),
 		"invoices.removePayment": ({ id }) => repos().invoices.removePayment(id),
 		"invoices.markPaid": ({ id }) => repos().invoices.markPaid(id),
+		"invoices.exportPdf": ({ id }) => exportPdf(repos(), id),
+		"invoices.print": ({ id }) => printInvoice(repos(), id),
+
+		"invoices.email": ({ id, ...request }) => prepareEmail(repos(), { id, ...request }),
+		"invoices.markSent": ({ id, to, reminder }) =>
+			repos().invoices.recordSent(id, { to, reminder }),
+		"emailTemplates.get": () => getEmailTemplates(repos()),
+		"emailTemplates.save": (templates) => saveEmailTemplates(repos(), templates),
+
+		"exportSettings.get": () => getExportSettings(repos()),
+		"exportSettings.save": ({ pattern }) => saveExportSettings(repos(), { pattern }),
+		"exportSettings.chooseFolder": () => chooseExportFolder(repos()),
+		"files.reveal": ({ path }) => revealExported(path),
 		"invoices.void": ({ id, reason }) => repos().invoices.void(id, reason),
 	};
 }

@@ -1,5 +1,6 @@
 import {
 	type BusinessProfile,
+	brandingSchema,
 	type CatalogItem,
 	type Client,
 	type ClientImportResult,
@@ -7,6 +8,7 @@ import {
 	catalogItemInputSchema,
 	clientInputSchema,
 	type DomainErrorCode,
+	type EmailTemplates,
 	INVOICE_STATUSES,
 	type Invoice,
 	type InvoiceEvent,
@@ -29,10 +31,23 @@ import { z } from "zod";
  * imports this file for types only, so the schemas never ship in the renderer bundle.
  */
 
+const templateSchema = z.object({
+	subject: z.string().trim().min(1, "Add a subject").max(300),
+	body: z.string().max(10_000),
+});
+const emailTemplatesSchema = z.object({ invoice: templateSchema, reminder: templateSchema });
+
 /** Marks a procedure's return type; the value itself is never used at runtime. */
 const returns = <T>() => undefined as unknown as T;
 
 const byId = z.object({ id: idSchema });
+
+export interface ExportSettings {
+	/** PDF file name pattern, e.g. "{number} {client}". */
+	pattern: string;
+	/** Folder the save dialog opens in. */
+	folder: string;
+}
 
 export interface AppInfo {
 	name: string;
@@ -75,6 +90,7 @@ export const contract = {
 	"profile.save": { input: profileInputSchema, output: returns<BusinessProfile>() },
 	/** Opens a file dialog; null when cancelled. */
 	"profile.chooseLogo": { input: z.void(), output: returns<BusinessProfile | null>() },
+	"profile.saveBranding": { input: brandingSchema, output: returns<BusinessProfile>() },
 	"profile.removeLogo": { input: z.void(), output: returns<BusinessProfile | null>() },
 	/** The current logo as a data URL. */
 	"profile.logo": { input: z.void(), output: returns<string | null>() },
@@ -174,6 +190,43 @@ export const contract = {
 	"invoices.removePayment": { input: byId, output: returns<Invoice>() },
 	/** One payment for the whole balance, dated today. */
 	"invoices.markPaid": { input: byId, output: returns<Invoice>() },
+	/** Renders the PDF and asks where to save it; null when cancelled. */
+	"invoices.exportPdf": {
+		input: byId,
+		output: returns<{ path: string; fileName: string } | null>(),
+	},
+	/** Opens the system print dialog; false when cancelled. */
+	"invoices.print": { input: byId, output: returns<boolean>() },
+
+	/** Opens an email with the PDF: an Apple Mail draft, or the default app via mailto. */
+	"invoices.email": {
+		input: byId.extend({
+			to: z.email("Enter a valid email"),
+			cc: z.array(z.email()).max(20),
+			subject: z.string().trim().min(1, "Add a subject").max(300),
+			body: z.string().max(10_000),
+			app: z.enum(["mail", "default"]),
+		}),
+		output: returns<{ fileName: string }>(),
+	},
+	/** Confirms the email went out; records it in the activity. */
+	"invoices.markSent": {
+		input: byId.extend({ to: z.string().max(320), reminder: z.boolean() }),
+		output: returns<void>(),
+	},
+
+	"emailTemplates.get": { input: z.void(), output: returns<EmailTemplates>() },
+	"emailTemplates.save": { input: emailTemplatesSchema, output: returns<EmailTemplates>() },
+
+	"exportSettings.get": { input: z.void(), output: returns<ExportSettings>() },
+	"exportSettings.save": {
+		input: z.object({ pattern: z.string().max(100) }),
+		output: returns<ExportSettings>(),
+	},
+	/** Folder picker; null when cancelled. */
+	"exportSettings.chooseFolder": { input: z.void(), output: returns<ExportSettings | null>() },
+	/** Shows an exported file in Finder / Explorer. */
+	"files.reveal": { input: z.object({ path: z.string().max(4096) }), output: returns<void>() },
 	"invoices.void": {
 		input: byId.extend({ reason: z.string().max(500).optional() }),
 		output: returns<Invoice>(),

@@ -142,12 +142,12 @@ function IssuedInvoice({ invoice }: { invoice: Invoice }) {
 						<ActivityPanel events={events} currency={invoice.currency} />
 					</PageSection>
 				</div>
-				<PageSection className="@3xl:sticky @3xl:top-2">
+				<PageSection className="@3xl:sticky @3xl:top-14">
 					{snapshot ? (
 						<InvoicePreview
 							invoice={snapshot}
 							logoSrc={logo}
-							stamp={invoice.status === "void" ? "Void" : invoice.status === "paid" ? "Paid" : null}
+							stamp={invoice.status === "void" ? "Void" : null}
 						/>
 					) : null}
 				</PageSection>
@@ -248,6 +248,12 @@ function eventText(event: InvoiceEvent, currency: string): string {
 			return "Paid in full";
 		case "unpaid":
 			return "Reopened";
+		case "exported":
+			return p.fileName ? `Exported ${String(p.fileName)}` : "PDF exported";
+		case "sent":
+			return p.reminder
+				? `Reminder sent to ${String(p.to ?? "")}`
+				: `Sent to ${String(p.to ?? "")}`;
 		case "voided":
 			return p.reason ? `Voided: ${String(p.reason)}` : "Voided";
 	}

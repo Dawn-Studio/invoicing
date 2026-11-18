@@ -7,6 +7,8 @@ export const RPC_CHANNEL = "rpc";
 export interface DesktopApi {
 	/** Value of `process.platform` in the preload, e.g. "darwin", "win32", "linux". */
 	platform: string;
+	/** The window is translucent (macOS vibrancy / Windows acrylic); see main/index.ts. */
+	glass: boolean;
 	/** Low-level call into the main process; use the typed `rpc` helper in the renderer instead. */
 	invoke(channel: string, input: unknown): Promise<RpcResult<unknown>>;
 }

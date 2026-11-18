@@ -1,7 +1,15 @@
 import type { InvoiceStatus, InvoiceSummary } from "@dawnstudio/core";
 import { UnitTag } from "@dawnstudio/ui/components/amount";
-import { Badge } from "@dawnstudio/ui/components/badge";
 import { cn } from "@dawnstudio/ui/lib/utils";
+import {
+	Circle,
+	CircleAlert,
+	CircleCheck,
+	CircleDashed,
+	CircleDot,
+	CircleSlash,
+	type LucideIcon,
+} from "lucide-react";
 import { Link } from "react-router";
 import { formatAmount, formatIsoDate, joinParts } from "../../lib/format";
 
@@ -26,13 +34,29 @@ export function displayStatus(
 	return invoice.amountPaid > 0 ? "partial" : "issued";
 }
 
-export function StatusBadge({ status }: { status: DisplayStatus }) {
+const statusIcons: Record<DisplayStatus, { icon: LucideIcon; className: string }> = {
+	draft: { icon: CircleDashed, className: "text-muted-foreground" },
+	issued: { icon: Circle, className: "text-brand-ink" },
+	partial: { icon: CircleDot, className: "text-warning" },
+	overdue: { icon: CircleAlert, className: "text-destructive" },
+	paid: { icon: CircleCheck, className: "text-success" },
+	void: { icon: CircleSlash, className: "text-muted-foreground" },
+};
+
+/** Linear-style status: a coloured circle icon and the name. */
+export function StatusBadge({ status, className }: { status: DisplayStatus; className?: string }) {
+	const { icon: Icon, className: tone } = statusIcons[status];
 	return (
-		<Badge
-			variant={status === "overdue" ? "destructive" : status === "paid" ? "secondary" : "outline"}
+		<span
+			className={cn(
+				"inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground",
+				status === "overdue" && "text-destructive",
+				className,
+			)}
 		>
+			<Icon className={cn("size-3.5", tone)} />
 			{statusLabels[status]}
-		</Badge>
+		</span>
 	);
 }
 

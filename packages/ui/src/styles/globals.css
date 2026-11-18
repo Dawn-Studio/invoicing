@@ -1,7 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "@fontsource/be-vietnam-pro/400.css";
+@import "@fontsource/be-vietnam-pro/500.css";
+@import "@fontsource/be-vietnam-pro/600.css";
+@import "@fontsource/be-vietnam-pro/700.css";
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/geist-mono";
+@import "@fontsource-variable/source-serif-4";
 @import "./theme.css";
 
 /* Scan this package's components so consumers get their utility classes. */
@@ -10,7 +15,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-	--font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+	--font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
 	--font-mono: "Geist Mono Variable", ui-monospace, monospace;
 	--color-panel: var(--panel);
 	--color-panel-header: var(--panel-header);
@@ -29,6 +34,9 @@
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
 	--color-destructive: var(--destructive);
+	--color-brand-ink: var(--brand-ink);
+	--color-success: var(--success);
+	--color-warning: var(--warning);
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
@@ -56,29 +64,28 @@
 	* {
 		@apply border-border outline-ring/50;
 	}
+	/* Linear-like density: everything sized in rem comes out at 87.5%. Invoice templates are
+	   laid out in px and are not affected. */
+	html {
+		font-size: 14px;
+	}
 	body {
 		@apply bg-background text-foreground font-sans antialiased;
+		letter-spacing: -0.005em;
+	}
+	/* One weight for every Lucide icon. */
+	svg.lucide {
+		stroke-width: 1.75;
 	}
 }
 
-:root {
-	--sidebar: hsl(0 0% 98%);
-	--sidebar-foreground: hsl(240 5.3% 26.1%);
-	--sidebar-primary: hsl(240 5.9% 10%);
-	--sidebar-primary-foreground: hsl(0 0% 98%);
-	--sidebar-accent: hsl(240 4.8% 95.9%);
-	--sidebar-accent-foreground: hsl(240 5.9% 10%);
-	--sidebar-border: hsl(220 13% 91%);
-	--sidebar-ring: hsl(217.2 91.2% 59.8%);
+/*
+ * Glass: on macOS (vibrancy) and Windows 11 (acrylic) the window itself is translucent.
+ * The page lets it show through, tinted, and content sits on opaque inset surfaces.
+ */
+html[data-glass="true"] body {
+	background: transparent;
 }
-
-.dark {
-	--sidebar: hsl(240 5.9% 10%);
-	--sidebar-foreground: hsl(240 4.8% 95.9%);
-	--sidebar-primary: hsl(224.3 76.3% 48%);
-	--sidebar-primary-foreground: hsl(0 0% 100%);
-	--sidebar-accent: hsl(240 3.7% 15.9%);
-	--sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-	--sidebar-border: hsl(240 3.7% 15.9%);
-	--sidebar-ring: hsl(217.2 91.2% 59.8%);
+html[data-glass="true"] {
+	--sidebar: var(--glass-tint);
 }

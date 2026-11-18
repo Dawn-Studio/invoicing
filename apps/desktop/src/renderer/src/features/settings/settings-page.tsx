@@ -44,6 +44,9 @@ import {
 import { LogoPanel } from "../profile/logo-panel";
 import { ProfileForm } from "../profile/profile-form";
 import { WorkspacePanel } from "../workspaces/workspace-panel";
+import { BrandingPanel } from "./branding-panel";
+import { EmailPanel } from "./email-panel";
+import { ExportPanel } from "./export-panel";
 import { PaymentAccountForm } from "./payment-account-form";
 import { TaxRateForm } from "./tax-rate-form";
 
@@ -62,6 +65,17 @@ export function SettingsPage() {
 					afterBusiness={<LogoPanel />}
 				/>
 			) : null}
+			{profile ? (
+				<PageSection>
+					<BrandingPanel key={profile.updatedAt} profile={profile} />
+				</PageSection>
+			) : null}
+			<PageSection>
+				<ExportPanel />
+			</PageSection>
+			<PageSection>
+				<EmailPanel />
+			</PageSection>
 			<PageSection>
 				<PaymentAccountsPanel defaultCurrency={profile?.defaultCurrency} />
 			</PageSection>

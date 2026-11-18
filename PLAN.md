@@ -150,7 +150,7 @@ Notes from implementation:
 
 ### Phase 2 — Business profile & clients ✅ (2026-11-17)
 
-> UI follows the user's references: recessed panel headers over lighter rounded bodies, label/value rows, mono status labels, currency tags. Shared pieces live in `packages/ui` (`panel.tsx`, `amount.tsx`).
+> UI (since 2026-11-18): Linear-inspired structure with its own brand. Lime brand colour `#8FFF4A` (buttons, active states; `--brand-ink` deeper green for text/icons on light backgrounds), Be Vietnam Pro as the UI font, rounded (not pill) buttons, olive-black dark mode. Glass: macOS vibrancy / Windows 11 acrylic sidebar, and backdrop blur on the sticky page header, menus, popovers, dialogs, tooltips and toasts. Content sits in an inset card; compact 14px root; coloured status icons. Icons are Lucide only (`lucide-react`, stroke 1.75). Shared pieces live in `packages/ui` (`theme.css`, `panel.tsx`, `amount.tsx`).
 
 - First-run onboarding: business details, logo, default currency, numbering pattern, payment accounts (tax rates optional, in settings)
 - Clients: list, search, create/edit, archive

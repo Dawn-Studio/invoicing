@@ -1,3 +1,4 @@
+import { release } from "node:os";
 import { join } from "node:path";
 import { app, BrowserWindow, dialog, nativeTheme, shell } from "electron";
 import { createHandlers } from "./handlers";
@@ -10,7 +11,22 @@ const isMac = process.platform === "darwin";
 if (!app.isPackaged) app.setPath("userData", join(app.getPath("appData"), "Invoicing (Dev)"));
 
 // Matches --background in packages/ui theme.css, so the window never flashes white in dark mode.
-const backgroundColor = () => (nativeTheme.shouldUseDarkColors ? "#0c0a09" : "#ffffff");
+const backgroundColor = () => (nativeTheme.shouldUseDarkColors ? "#0e100c" : "#ffffff");
+
+/**
+ * Translucent "glass" window: macOS vibrancy, or acrylic on Windows 11 (build 22621+, the
+ * first with backgroundMaterial). Elsewhere the window stays opaque and the renderer uses
+ * solid colours. The preload reads `--glass` and tells the renderer.
+ */
+const glass =
+	isMac || (process.platform === "win32" && Number(release().split(".")[2] ?? 0) >= 22_621);
+
+const glassOptions = (): Electron.BrowserWindowConstructorOptions =>
+	!glass
+		? { backgroundColor: backgroundColor() }
+		: isMac
+			? { vibrancy: "sidebar", visualEffectState: "followWindow", backgroundColor: "#00000000" }
+			: { backgroundMaterial: "acrylic", backgroundColor: "#00000000" };
 
 function createWindow() {
 	const window = new BrowserWindow({
@@ -20,11 +36,12 @@ function createWindow() {
 		minHeight: 600,
 		show: false,
 		title: "Invoicing",
-		backgroundColor: backgroundColor(),
+		...glassOptions(),
 		titleBarStyle: isMac ? "hiddenInset" : "default",
-		trafficLightPosition: { x: 18, y: 18 },
+		trafficLightPosition: { x: 16, y: 16 },
 		webPreferences: {
 			preload: join(__dirname, "../preload/index.js"),
+			additionalArguments: glass ? ["--glass"] : [],
 			sandbox: true,
 			contextIsolation: true,
 			nodeIntegration: false,

@@ -9,6 +9,7 @@ import { router } from "./router";
 import "./styles.css";
 
 document.documentElement.dataset.platform = window.api.platform;
+document.documentElement.dataset.glass = String(window.api.glass);
 syncThemeWithSystem();
 
 // Data is local, so there's no network to retry or refetch on focus.

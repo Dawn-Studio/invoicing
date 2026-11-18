@@ -26,7 +26,7 @@ import * as React from "react";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = "16rem";
+const SIDEBAR_WIDTH = "15.5rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
@@ -240,7 +240,7 @@ function Sidebar({
 				<div
 					data-sidebar="sidebar"
 					data-slot="sidebar-inner"
-					className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow-sm"
+					className="flex h-full w-full flex-col bg-sidebar group-data-[variant=inset]:bg-transparent group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow-sm"
 				>
 					{children}
 				</div>
@@ -302,7 +302,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
 			data-slot="sidebar-inset"
 			className={cn(
 				"relative flex w-full flex-1 flex-col bg-background",
-				"md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
+				"md:peer-data-[variant=inset]:my-1.5 md:peer-data-[variant=inset]:mr-1.5 md:peer-data-[variant=inset]:overflow-hidden md:peer-data-[variant=inset]:rounded-[10px] md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:shadow-[0_1px_2px_rgb(0_0_0/0.06),0_4px_16px_-6px_rgb(0_0_0/0.12)] md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-1.5 dark:md:peer-data-[variant=inset]:shadow-[0_1px_2px_rgb(0_0_0/0.4),0_8px_24px_-8px_rgb(0_0_0/0.6)]",
 				className,
 			)}
 			{...props}

@@ -102,6 +102,8 @@ export const INVOICE_EVENT_TYPES = [
 	"paid",
 	"unpaid",
 	"voided",
+	"exported",
+	"sent",
 ] as const;
 export type InvoiceEventType = (typeof INVOICE_EVENT_TYPES)[number];
 

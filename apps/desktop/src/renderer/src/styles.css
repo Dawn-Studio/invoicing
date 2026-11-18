@@ -21,3 +21,24 @@
 		@apply h-full overflow-hidden select-none;
 	}
 }
+
+/* The print route (PDF export): white page, normal document flow so long invoices paginate. */
+html.printing,
+html.printing body,
+html.printing #root {
+	height: auto;
+	overflow: visible;
+	background: white;
+}
+
+@page {
+	margin: 0;
+}
+
+@media print {
+	/* Rows and the closing block move to the next page whole rather than splitting. */
+	.invoice-sheet tr,
+	.invoice-sheet .break-inside-avoid {
+		break-inside: avoid;
+	}
+}
