@@ -1,7 +1,9 @@
 /*
  * Design tokens for the desktop app and the landing page.
  * Tailwind v4 `@theme inline` mapping and base layer are added in globals.css (Phase 0).
- * Note: --radius is 0, so every component renders with sharp corners.
+ * --radius follows the UI references (rounded panels and controls); set it to 0 for sharp corners.
+ * --panel / --panel-header are additions for the panel layout: a recessed title strip over a
+ * lighter body.
  */
 
 :root {
@@ -28,7 +30,9 @@
 	--chart-3: oklch(0.438 0.017 39.3);
 	--chart-4: oklch(0.367 0.016 35.7);
 	--chart-5: oklch(0.268 0.011 36.5);
-	--radius: 0;
+	--radius: 0.75rem;
+	--panel: oklch(1 0 0);
+	--panel-header: oklch(0.975 0.002 67.8);
 	--sidebar: oklch(0.986 0.002 67.8);
 	--sidebar-foreground: oklch(0.147 0.004 49.3);
 	--sidebar-primary: oklch(0.511 0.262 276.966);
@@ -40,6 +44,8 @@
 }
 
 .dark {
+	--panel: oklch(0.205 0.006 49.3);
+	--panel-header: oklch(0.172 0.004 49.3);
 	--background: oklch(0.147 0.004 49.3);
 	--foreground: oklch(0.986 0.002 67.8);
 	--card: oklch(0.214 0.009 43.1);

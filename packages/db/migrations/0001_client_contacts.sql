@@ -1,0 +1,1 @@
+ALTER TABLE `clients` ADD `contacts` text DEFAULT '[]' NOT NULL;

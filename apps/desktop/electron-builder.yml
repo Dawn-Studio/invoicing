@@ -6,6 +6,13 @@ directories:
   output: release
 files:
   - out/**
+  # better-sqlite3 ships Node-API binaries for every platform; keep only the target's.
+  - "!**/better-sqlite3/prebuilds/*.node"
+  - "**/better-sqlite3/prebuilds/${platform}-${arch}.node"
+# SQL migrations are applied on startup from Resources/migrations.
+extraResources:
+  - from: ../../packages/db/migrations
+    to: migrations
 asar: true
 # Lock down Electron runtime switches: no running the binary as plain Node, no inspector flags,
 # and only load (integrity-checked) code from app.asar.

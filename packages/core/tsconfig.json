@@ -1,0 +1,8 @@
+{
+	"extends": "@dawnstudio/config/tsconfig.base.json",
+	"compilerOptions": {
+		// Runs in both Electron main and the renderer: needs Intl and Web Crypto, nothing else.
+		"lib": ["ES2023", "DOM"]
+	},
+	"include": ["src", "vitest.config.ts"]
+}

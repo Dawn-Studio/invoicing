@@ -1,0 +1,27 @@
+{
+	"name": "@dawnstudio/db",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"db:generate": "drizzle-kit generate"
+	},
+	"dependencies": {
+		"@dawnstudio/core": "workspace:*",
+		"better-sqlite3": "^13.2.0",
+		"drizzle-orm": "^0.45.4"
+	},
+	"devDependencies": {
+		"@dawnstudio/config": "workspace:*",
+		"@types/better-sqlite3": "^9.6.0",
+		"@types/node": "^24",
+		"drizzle-kit": "^0.31.11",
+		"typescript": "~6.0.3",
+		"vitest": "^5.1.0"
+	}
+}

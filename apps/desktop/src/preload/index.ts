@@ -1,9 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { type DesktopApi, IpcChannel } from "../shared/api";
+import { type DesktopApi, RPC_CHANNEL } from "../shared/api";
 
 const api: DesktopApi = {
 	platform: process.platform,
-	getAppInfo: () => ipcRenderer.invoke(IpcChannel.GetAppInfo),
+	invoke: (channel, input) => ipcRenderer.invoke(RPC_CHANNEL, channel, input),
 };
 
 contextBridge.exposeInMainWorld("api", api);

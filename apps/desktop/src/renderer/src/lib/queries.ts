@@ -1,0 +1,61 @@
+import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Channel, Input, Output } from "../../../shared/contract";
+import { rpc } from "./rpc";
+
+/**
+ * React Query wrappers around `rpc`. Query keys start with the entity name, so a mutation
+ * invalidates everything about that entity with one key.
+ */
+export function useRpcQuery<C extends Channel>(
+	channel: C,
+	input?: Input<C>,
+	options: { enabled?: boolean } = {},
+) {
+	return useQuery({
+		queryKey: [...channel.split("."), input ?? null] as QueryKey,
+		queryFn: () => (rpc as (c: C, i?: Input<C>) => Promise<Output<C>>)(channel, input),
+		...options,
+	});
+}
+
+export function useRpcMutation<C extends Channel>(channel: C, invalidates: string[]) {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (input: Input<C>) =>
+			(rpc as (c: C, i: Input<C>) => Promise<Output<C>>)(channel, input),
+		onSuccess: () =>
+			Promise.all(invalidates.map((key) => queryClient.invalidateQueries({ queryKey: [key] }))),
+	});
+}
+
+export const useAppInfo = () => useRpcQuery("app.info");
+export const useProfile = () => useRpcQuery("profile.get");
+export const useSaveProfile = () => useRpcMutation("profile.save", ["profile"]);
+export const useLogo = () => useRpcQuery("profile.logo");
+export const useChooseLogo = () => useRpcMutation("profile.chooseLogo", ["profile"]);
+export const useRemoveLogo = () => useRpcMutation("profile.removeLogo", ["profile"]);
+
+export const useClients = (input?: Input<"clients.list">) => useRpcQuery("clients.list", input);
+export const useClient = (id: string | undefined) =>
+	useRpcQuery("clients.get", { id: id ?? "" }, { enabled: Boolean(id) });
+export const useCreateClient = () => useRpcMutation("clients.create", ["clients"]);
+export const useUpdateClient = () => useRpcMutation("clients.update", ["clients", "invoices"]);
+export const useArchiveClient = () => useRpcMutation("clients.archive", ["clients"]);
+export const useUnarchiveClient = () => useRpcMutation("clients.unarchive", ["clients"]);
+export const useClientStats = (id: string) => useRpcQuery("clients.stats", { id });
+export const useImportClients = () => useRpcMutation("clients.import", ["clients"]);
+
+export const useInvoices = (input?: Input<"invoices.list">) => useRpcQuery("invoices.list", input);
+
+export const usePaymentAccounts = () => useRpcQuery("paymentAccounts.list");
+export const useCreatePaymentAccount = () =>
+	useRpcMutation("paymentAccounts.create", ["paymentAccounts"]);
+export const useUpdatePaymentAccount = () =>
+	useRpcMutation("paymentAccounts.update", ["paymentAccounts"]);
+export const useArchivePaymentAccount = () =>
+	useRpcMutation("paymentAccounts.archive", ["paymentAccounts"]);
+
+export const useTaxRates = () => useRpcQuery("taxRates.list");
+export const useCreateTaxRate = () => useRpcMutation("taxRates.create", ["taxRates"]);
+export const useUpdateTaxRate = () => useRpcMutation("taxRates.update", ["taxRates"]);
+export const useArchiveTaxRate = () => useRpcMutation("taxRates.archive", ["taxRates"]);

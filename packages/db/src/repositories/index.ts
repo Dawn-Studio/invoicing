@@ -1,0 +1,24 @@
+import type { Db } from "../database";
+import { clientRepository } from "./clients";
+import { createContext, type RepositoryContext } from "./context";
+import { invoiceRepository } from "./invoices";
+import { paymentAccountRepository } from "./payment-accounts";
+import { profileRepository } from "./profile";
+import { settingsRepository } from "./settings";
+import { taxRateRepository } from "./tax-rates";
+
+export function createRepositories(db: Db, overrides?: Partial<Omit<RepositoryContext, "db">>) {
+	const ctx = createContext(db, overrides);
+	return {
+		profile: profileRepository(ctx),
+		clients: clientRepository(ctx),
+		paymentAccounts: paymentAccountRepository(ctx),
+		taxRates: taxRateRepository(ctx),
+		invoices: invoiceRepository(ctx),
+		settings: settingsRepository(ctx),
+	};
+}
+
+export type Repositories = ReturnType<typeof createRepositories>;
+export type { ClientListOptions } from "./clients";
+export type { InvoiceListOptions } from "./invoices";

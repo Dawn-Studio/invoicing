@@ -128,16 +128,27 @@ Invoice statuses: `draft → issued → paid`, plus `void`; `overdue` is derived
 
 **Done when:** `pnpm dev` runs both apps with the same look, and a `.dmg` launches.
 
-### Phase 1 — Data layer & domain core
+### Phase 1 — Data layer & domain core ✅ (2026-11-17)
 
-- Drizzle schema + migrations, run on app start; DB in `app.getPath('userData')`
+- Drizzle schema + migrations, run on app start; DB in `app.getPath('userData')` (`Invoicing (Dev)` when unpackaged)
 - Typed IPC contract + zod validation; repository layer
 - `core`: money, currency exponents, line/tax/discount totals, numbering, snapshot builder — fully unit-tested
 - `invoice_events` append-only log
 
 **Done when:** `core` tests pass; renderer can read/write through IPC.
 
-### Phase 2 — Business profile & clients
+Notes from implementation:
+
+- better-sqlite3 13 ships Node-API prebuilds for every platform, so no Electron rebuild step is needed; the package keeps only the target platform's binary.
+- Rounding: each line rounds once (half away from zero); the invoice discount is spread over positive lines (largest remainder); tax is computed once per rate on the discounted base.
+- Invoice numbers are assigned at issue time inside one transaction with the sequence bump; a clash returns `CONFLICT` and nothing changes.
+- Tax-rate notes (e.g. exemption notices) are copied into the snapshot as `taxNotes`.
+- The UI proof ("save the business name from Settings") was replaced by an end-to-end IPC check against the built and packaged app, since UI waits for design references.
+- For the editor (Phase 3): picking a client on an existing draft should re-apply that client's currency, payment terms and matching payment account in the UI.
+
+### Phase 2 — Business profile & clients ✅ (2026-11-17)
+
+> UI follows the user's references: recessed panel headers over lighter rounded bodies, label/value rows, mono status labels, currency tags. Shared pieces live in `packages/ui` (`panel.tsx`, `amount.tsx`).
 
 - First-run onboarding: business details, logo, default currency, numbering pattern, payment accounts (tax rates optional, in settings)
 - Clients: list, search, create/edit, archive

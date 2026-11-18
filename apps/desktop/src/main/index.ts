@@ -1,8 +1,13 @@
 import { join } from "node:path";
-import { app, BrowserWindow, ipcMain, nativeTheme, shell } from "electron";
-import { type AppInfo, IpcChannel } from "../shared/api";
+import { app, BrowserWindow, dialog, nativeTheme, shell } from "electron";
+import { initDatabase } from "./database";
+import { createHandlers } from "./handlers";
+import { registerRpc } from "./rpc";
 
 const isMac = process.platform === "darwin";
+
+// Keep development data apart from the installed app's real invoices.
+if (!app.isPackaged) app.setPath("userData", join(app.getPath("appData"), "Invoicing (Dev)"));
 
 // Matches --background in packages/ui theme.css, so the window never flashes white in dark mode.
 const backgroundColor = () => (nativeTheme.shouldUseDarkColors ? "#0c0a09" : "#ffffff");
@@ -47,16 +52,23 @@ function createWindow() {
 	}
 }
 
-function registerIpc() {
-	ipcMain.handle(
-		IpcChannel.GetAppInfo,
-		(): AppInfo => ({ name: app.getName(), version: app.getVersion() }),
-	);
-}
-
 app.whenReady().then(() => {
 	app.setAppUserModelId("com.dawnstudio.invoicing");
-	registerIpc();
+
+	let opened: ReturnType<typeof initDatabase>;
+	try {
+		opened = initDatabase();
+	} catch (error) {
+		dialog.showErrorBox(
+			"Invoicing couldn't open its database",
+			`Your data hasn't been changed.\n\n${error instanceof Error ? error.message : String(error)}`,
+		);
+		app.exit(1);
+		return;
+	}
+	app.on("will-quit", () => opened.database.close());
+
+	registerRpc(createHandlers(opened.repos));
 	createWindow();
 
 	app.on("activate", () => {

@@ -9,41 +9,54 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@dawnstudio/ui/components/sidebar";
-import { mainNav, type PageId, pages } from "../navigation";
+import { FileText, LayoutDashboard, type LucideIcon, Settings, Users } from "lucide-react";
+import { NavLink, useLocation } from "react-router";
+import { useProfile } from "../lib/queries";
 
-interface AppSidebarProps {
-	active: PageId;
-	onNavigate: (page: PageId) => void;
+const mainNav: { to: string; label: string; icon: LucideIcon }[] = [
+	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
+	{ to: "/invoices", label: "Invoices", icon: FileText },
+	{ to: "/clients", label: "Clients", icon: Users },
+];
+
+function NavItem({ to, label, icon: Icon }: (typeof mainNav)[number]) {
+	const { pathname } = useLocation();
+	const active = to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`);
+	return (
+		<SidebarMenuItem>
+			<SidebarMenuButton asChild isActive={active}>
+				<NavLink to={to}>
+					<Icon />
+					<span>{label}</span>
+				</NavLink>
+			</SidebarMenuButton>
+		</SidebarMenuItem>
+	);
 }
 
-export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
-	const renderItem = (id: PageId) => {
-		const { title, icon: Icon } = pages[id];
-		return (
-			<SidebarMenuItem key={id}>
-				<SidebarMenuButton isActive={active === id} onClick={() => onNavigate(id)}>
-					<Icon />
-					<span>{title}</span>
-				</SidebarMenuButton>
-			</SidebarMenuItem>
-		);
-	};
-
+export function AppSidebar() {
+	const { data: profile } = useProfile();
 	return (
 		<Sidebar>
 			{/* Leaves room for the macOS traffic lights and lets the user drag the window. */}
-			<SidebarHeader className="app-drag h-13 justify-end px-4 pb-2 in-data-[platform=darwin]:pl-22">
-				<span className="text-sm font-semibold tracking-tight">Invoicing</span>
+			<SidebarHeader className="app-drag h-13 justify-center px-4 in-data-[platform=darwin]:pl-22">
+				<span className="truncate text-sm font-medium">{profile?.name ?? "Invoicing"}</span>
 			</SidebarHeader>
 			<SidebarContent>
 				<SidebarGroup>
 					<SidebarGroupContent>
-						<SidebarMenu>{mainNav.map(renderItem)}</SidebarMenu>
+						<SidebarMenu>
+							{mainNav.map((item) => (
+								<NavItem key={item.to} {...item} />
+							))}
+						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
 			<SidebarFooter>
-				<SidebarMenu>{renderItem("settings")}</SidebarMenu>
+				<SidebarMenu>
+					<NavItem to="/settings" label="Settings" icon={Settings} />
+				</SidebarMenu>
 			</SidebarFooter>
 		</Sidebar>
 	);

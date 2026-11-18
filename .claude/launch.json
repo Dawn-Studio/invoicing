@@ -1,0 +1,18 @@
+{
+	"version": "0.0.1",
+	"configurations": [
+		{
+			"name": "web",
+			"runtimeExecutable": "/opt/homebrew/opt/node@26/bin/node",
+			"runtimeArgs": [
+				"apps/web/node_modules/astro/bin/astro.mjs",
+				"dev",
+				"--root",
+				"apps/web",
+				"--port",
+				"4321"
+			],
+			"port": 4321
+		}
+	]
+}
