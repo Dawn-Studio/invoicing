@@ -24,6 +24,7 @@ export function createHandlers(repos: Repositories): Handlers {
 			const fileName = repos.profile.get()?.logoFile;
 			return fileName ? logoDataUrl(fileName) : null;
 		},
+		"logos.get": ({ fileName }) => logoDataUrl(fileName),
 
 		"clients.list": (input) => repos.clients.list(input),
 		"clients.get": ({ id }) => repos.clients.get(id),

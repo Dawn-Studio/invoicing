@@ -155,7 +155,7 @@ Notes from implementation:
 
 **Done when:** you never have to retype your or a client's details.
 
-### Phase 3 — Invoice editor
+### Phase 3 — Invoice editor ✅ (2026-11-18)
 
 - Pick client (prefills currency, terms, payment account), line items (reorder, quantity, rate, tax), discount, notes, dates
 - Drafts autosave; live preview beside the form

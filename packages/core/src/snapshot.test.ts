@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { BusinessProfile, Client } from "./entities";
 import { addressSchema, brandingSchema } from "./schemas";
-import { buildSnapshot, type SnapshotInput } from "./snapshot";
+import { buildSnapshot, issueProblems, previewSnapshot, type SnapshotInput } from "./snapshot";
 
 const profile: BusinessProfile = {
 	id: "p",
@@ -89,5 +89,19 @@ describe("buildSnapshot", () => {
 		],
 	])("refuses to issue invalid invoices (%#)", (overrides, message) => {
 		expect(() => buildSnapshot(input(overrides as Partial<SnapshotInput>))).toThrow(message);
+	});
+
+	it("lists every problem at once for the editor", () => {
+		expect(issueProblems(input({ client: null, items: [] }))).toEqual([
+			"Choose a client",
+			"Add at least one line item",
+		]);
+		expect(issueProblems(input())).toEqual([]);
+	});
+
+	it("previews half-finished drafts without throwing", () => {
+		const preview = previewSnapshot(input({ client: null, items: [] }));
+		expect(preview.client.name).toBe("");
+		expect(preview.totals.total).toBe(0);
 	});
 });

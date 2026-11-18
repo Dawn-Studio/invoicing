@@ -3,6 +3,7 @@ import { AppLayout } from "./app-layout";
 import { ClientPage } from "./features/clients/client-page";
 import { ClientsPage } from "./features/clients/clients-page";
 import { DashboardPage } from "./features/dashboard/dashboard-page";
+import { InvoicePage } from "./features/invoices/invoice-page";
 import { InvoicesPage } from "./features/invoices/invoices-page";
 import { SettingsPage } from "./features/settings/settings-page";
 import { WelcomePage } from "./features/welcome/welcome-page";
@@ -15,6 +16,7 @@ export const router = createHashRouter([
 		children: [
 			{ index: true, element: <DashboardPage /> },
 			{ path: "invoices", element: <InvoicesPage /> },
+			{ path: "invoices/:id", element: <InvoicePage /> },
 			{ path: "clients", element: <ClientsPage /> },
 			{ path: "clients/new", element: <ClientPage /> },
 			{ path: "clients/:id", element: <ClientPage /> },

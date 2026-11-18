@@ -1,6 +1,5 @@
-import { type Client, type InvoiceSummary, todayIso } from "@dawnstudio/core";
-import { Amount, UnitTag } from "@dawnstudio/ui/components/amount";
-import { Badge } from "@dawnstudio/ui/components/badge";
+import { type Client, todayIso } from "@dawnstudio/core";
+import { Amount } from "@dawnstudio/ui/components/amount";
 import {
 	DetailList,
 	DetailRow,
@@ -13,6 +12,7 @@ import {
 } from "@dawnstudio/ui/components/panel";
 import { formatAmount, formatIsoDate } from "../../lib/format";
 import { useClientStats, useInvoices } from "../../lib/queries";
+import { InvoiceRow } from "../invoices/invoice-row";
 
 /** Billed / paid / outstanding per currency, from issued invoices. */
 export function ClientOverviewPanel({ client }: { client: Client }) {
@@ -79,30 +79,6 @@ export function ClientOverviewPanel({ client }: { client: Client }) {
 	);
 }
 
-type DisplayStatus = InvoiceSummary["status"] | "overdue";
-
-const statusLabels: Record<DisplayStatus, string> = {
-	draft: "Draft",
-	issued: "Open",
-	overdue: "Overdue",
-	paid: "Paid",
-	void: "Void",
-};
-
-function displayStatus(invoice: InvoiceSummary, today: string): DisplayStatus {
-	return invoice.status === "issued" && invoice.dueDate < today ? "overdue" : invoice.status;
-}
-
-function StatusBadge({ status }: { status: DisplayStatus }) {
-	return (
-		<Badge
-			variant={status === "overdue" ? "destructive" : status === "paid" ? "secondary" : "outline"}
-		>
-			{statusLabels[status]}
-		</Badge>
-	);
-}
-
 /** Every invoice for this client, newest first. Hidden until there is one. */
 export function ClientInvoicesPanel({ clientId }: { clientId: string }) {
 	const { data: invoices = [] } = useInvoices({ clientId });
@@ -116,35 +92,10 @@ export function ClientInvoicesPanel({ clientId }: { clientId: string }) {
 				<PanelLabel>{invoices.length}</PanelLabel>
 			</PanelHeader>
 			<PanelBody>
-				<RowList>
-					{invoices.map((invoice) => {
-						const status = displayStatus(invoice, today);
-						return (
-							<li key={invoice.id} className="flex items-center gap-4">
-								<div className="min-w-0 flex-1">
-									<div className="flex items-center gap-2 text-[0.9375rem]">
-										<span className={invoice.number ? "font-mono" : "text-muted-foreground"}>
-											{invoice.number ?? "Not issued yet"}
-										</span>
-										<StatusBadge status={status} />
-									</div>
-									<div className="text-sm text-muted-foreground">
-										{formatIsoDate(invoice.issueDate)} · due {formatIsoDate(invoice.dueDate)}
-									</div>
-								</div>
-								<span
-									className={
-										status === "void"
-											? "text-muted-foreground tabular-nums line-through"
-											: "tabular-nums"
-									}
-								>
-									{formatAmount(invoice.total, invoice.currency)}
-								</span>
-								<UnitTag>{invoice.currency}</UnitTag>
-							</li>
-						);
-					})}
+				<RowList className="my-0 [&>li]:py-0">
+					{invoices.map((invoice) => (
+						<InvoiceRow key={invoice.id} invoice={invoice} today={today} showClient={false} />
+					))}
 				</RowList>
 			</PanelBody>
 		</Panel>

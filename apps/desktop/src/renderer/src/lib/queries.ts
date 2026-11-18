@@ -45,7 +45,20 @@ export const useUnarchiveClient = () => useRpcMutation("clients.unarchive", ["cl
 export const useClientStats = (id: string) => useRpcQuery("clients.stats", { id });
 export const useImportClients = () => useRpcMutation("clients.import", ["clients"]);
 
+/** A logo by stored file name; null name → no logo. */
+export const useLogoFile = (fileName: string | null | undefined) =>
+	useRpcQuery("logos.get", { fileName: fileName ?? "" }, { enabled: Boolean(fileName) });
+
 export const useInvoices = (input?: Input<"invoices.list">) => useRpcQuery("invoices.list", input);
+export const useInvoice = (id: string | undefined) =>
+	useRpcQuery("invoices.get", { id: id ?? "" }, { enabled: Boolean(id) });
+export const useCreateDraft = () => useRpcMutation("invoices.createDraft", ["invoices", "clients"]);
+export const useDeleteDraft = () => useRpcMutation("invoices.deleteDraft", ["invoices", "clients"]);
+export const useDuplicateInvoice = () =>
+	useRpcMutation("invoices.duplicate", ["invoices", "clients"]);
+// Issuing uses up a sequence number, so the profile's "next number" changes too.
+export const useIssueInvoice = () =>
+	useRpcMutation("invoices.issue", ["invoices", "clients", "profile"]);
 
 export const usePaymentAccounts = () => useRpcQuery("paymentAccounts.list");
 export const useCreatePaymentAccount = () =>

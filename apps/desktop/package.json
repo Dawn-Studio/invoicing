@@ -19,6 +19,7 @@
 		"@dawnstudio/config": "workspace:*",
 		"@dawnstudio/core": "workspace:*",
 		"@dawnstudio/db": "workspace:*",
+		"@dawnstudio/invoice-templates": "workspace:*",
 		"@dawnstudio/ui": "workspace:*",
 		"@hookform/resolvers": "^7.0.7",
 		"@tailwindcss/vite": "^4.3.4",

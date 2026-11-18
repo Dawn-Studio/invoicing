@@ -46,6 +46,11 @@ export const contract = {
 	"profile.removeLogo": { input: z.void(), output: returns<BusinessProfile | null>() },
 	/** The current logo as a data URL. */
 	"profile.logo": { input: z.void(), output: returns<string | null>() },
+	/** A stored logo by file name (issued invoices keep the one they were issued with). */
+	"logos.get": {
+		input: z.object({ fileName: z.string().max(64) }),
+		output: returns<string | null>(),
+	},
 
 	"clients.list": {
 		input: z

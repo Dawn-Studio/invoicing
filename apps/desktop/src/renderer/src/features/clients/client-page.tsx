@@ -28,6 +28,7 @@ import {
 	useUnarchiveClient,
 	useUpdateClient,
 } from "../../lib/queries";
+import { useStartInvoice } from "../invoices/use-start-invoice";
 import { AddressPanel } from "../profile/profile-form";
 import { ClientInvoicesPanel, ClientOverviewPanel } from "./client-overview";
 
@@ -86,6 +87,7 @@ function ClientForm({ client }: { client: Client | undefined }) {
 	const update = useUpdateClient();
 	const archive = useArchiveClient();
 	const unarchive = useUnarchiveClient();
+	const startInvoice = useStartInvoice();
 
 	const form = useForm<Values, unknown, Output>({
 		resolver: zodResolver(clientInputSchema),
@@ -135,19 +137,31 @@ function ClientForm({ client }: { client: Client | undefined }) {
 			back={{ to: "/clients", label: "Clients" }}
 			actions={
 				client ? (
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="ghost" size="icon-sm" aria-label="More actions">
-								<Ellipsis />
+					<>
+						{!client.archivedAt ? (
+							<Button
+								size="sm"
+								onClick={() => startInvoice.run(client.id)}
+								disabled={startInvoice.isPending}
+							>
+								{startInvoice.isPending ? <Spinner /> : <Plus />}
+								New invoice
 							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							<DropdownMenuItem onSelect={toggleArchived}>
-								{client.archivedAt ? <ArchiveRestore /> : <Archive />}
-								{client.archivedAt ? "Restore client" : "Archive client"}
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
+						) : null}
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="ghost" size="icon-sm" aria-label="More actions">
+									<Ellipsis />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								<DropdownMenuItem onSelect={toggleArchived}>
+									{client.archivedAt ? <ArchiveRestore /> : <Archive />}
+									{client.archivedAt ? "Restore client" : "Archive client"}
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</>
 				) : null
 			}
 		>

@@ -1,0 +1,2 @@
+/* Imported by apps that render invoices, so Tailwind picks up the templates' classes. */
+@source "./";

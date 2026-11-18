@@ -2,7 +2,7 @@
 
 The product definition behind `PLAN.md`. Epics are the units that go into Linear (project **Invoicing**). Each epic lists its features; each feature becomes an issue under the epic.
 
-_Last updated 2026-11-17._
+_Last updated 2026-11-18._
 
 Status: ✅ done · 🟡 partly done · ⬜ not started · 🔮 later (needs a signed app, a backend or a decision)
 
@@ -44,37 +44,37 @@ Never retype a client's details.
 - ✅ Other contacts per client (name + email), to be CC'd on invoice emails (E6)
 - ✅ Import clients from CSV: comma/semicolon/tab, common header names, per-row errors, existing names skipped
 
-### E3 · Invoice editor ⬜
+### E3 · Invoice editor 🟡
 
 Create a correct invoice quickly with a live preview.
 
-- ⬜ New draft: pick client → prefills currency, terms, payment account
-- ⬜ Line items: add, remove, reorder (drag), description, quantity, unit, rate, tax rate
-- ⬜ Invoice-level discount (amount or percent), notes, terms, issue/due dates
-- ⬜ Totals panel: subtotal, discount, tax summary per rate, total
-- ⬜ Autosave drafts; unsaved/validation states
-- ⬜ Live preview beside the form (same template as the PDF)
+- ✅ New draft (from Invoices or a client page): pick client → prefills currency, terms, payment account; changing client or currency re-applies them
+- ✅ Line items: add, remove, reorder (drag), description, quantity, unit, rate, tax rate
+- ✅ Invoice-level discount (amount or percent), notes, terms, issue/due dates (moving the issue date keeps the terms)
+- ✅ Totals panel: subtotal, discount, tax summary per rate, total
+- ✅ Autosave drafts (0.6 s after typing, and on leaving); Saved / Saving / Not saved states; fields that don't parse are highlighted and block saving
+- ✅ Live preview beside the form, from `@dawnstudio/invoice-templates` (the same component the PDF will use)
 - ⬜ Saved items catalog (services/products with default rate) for quick insert
 - ⬜ Timesheet lines: hours × rate, paste or import hours (CSV)
 
-### E4 · Issuing & invoice lifecycle ⬜
+### E4 · Issuing & invoice lifecycle 🟡
 
 Issued invoices are legal documents: numbered, frozen, auditable.
 
-- ⬜ Issue flow: confirm dialog, assign number, write snapshot, lock
-- ⬜ Read-only issued invoice view rendered from the snapshot
+- ✅ Issue flow: confirm dialog (or a list of what's missing), assign number, write snapshot, lock
+- ✅ Read-only issued invoice view rendered from the snapshot (with the logo it was issued with); "Void" stamp on voided invoices
 - ⬜ Record payments (full and partial, date, method, note); balance due
 - ⬜ Mark unpaid / undo payment
 - ⬜ Void with reason
-- ⬜ Duplicate (any status) into a new draft
-- ⬜ Activity timeline from `invoice_events`
+- ✅ Duplicate (any status) into a new draft; delete drafts
+- ✅ Activity timeline from `invoice_events`
 - 🔮 Credit notes linked to the original invoice
 
-### E5 · Branding, templates & PDF ⬜
+### E5 · Branding, templates & PDF 🟡
 
 Invoices that look like your studio, identical on screen and in the PDF.
 
-- ⬜ `packages/invoice-templates` with 2–3 templates (React, shared by preview and PDF)
+- 🟡 `packages/invoice-templates`: "Classic" template done (A4, React, shared by preview and PDF); 1–2 more to add
 - ⬜ Branding settings: accent colour, font, template, logo placement, footer text
 - ⬜ PDF export via hidden window + `printToPDF`; A4 / Letter
 - ⬜ Save dialog, default export folder, file name pattern, reveal in Finder
@@ -90,13 +90,13 @@ Get the invoice to the client with as little friction as possible, without integ
 - ⬜ Copy invoice summary to clipboard
 - ⬜ Record "sent" in the timeline; reminders for overdue invoices use the same flow
 
-### E7 · Invoice management ⬜
+### E7 · Invoice management 🟡
 
 Find any invoice and know its state at a glance.
 
-- ⬜ Invoice list: status, client, number, dates, amount, currency
+- ✅ Invoice list: status, client, number, dates, amount, currency; search by number or client
 - ⬜ Filters (status, client, period, currency) and search (number, client, line text)
-- ⬜ Overdue derived from due date, with "due in N days" / "N days overdue" labels
+- ✅ Overdue derived from due date, with "due in N days" / "N days overdue" labels
 - ⬜ Bulk actions: export PDFs, mark paid
 - ⬜ Keyboard navigation and quick actions from the list
 

@@ -76,21 +76,40 @@ export interface SnapshotInput {
 	taxNotes: string[];
 }
 
+/**
+ * What still stops the invoice from being issued, in the order the user would fix it.
+ * Empty when it can be issued.
+ */
+export function issueProblems(
+	input: Pick<SnapshotInput, "client" | "items" | "issueDate" | "dueDate" | "discount">,
+): string[] {
+	const problems: string[] = [];
+	if (!input.client) problems.push("Choose a client");
+	if (input.items.length === 0) problems.push("Add at least one line item");
+	else if (input.items.some((item) => item.description.trim() === "")) {
+		problems.push("Every line item needs a description");
+	}
+	if (input.dueDate < input.issueDate) problems.push("Due date can't be before the issue date");
+	if (computeTotals(input.items, input.discount).total < 0) {
+		problems.push("Invoice total can't be negative");
+	}
+	return problems;
+}
+
 /** Checks an invoice can be issued and builds its frozen snapshot. */
 export function buildSnapshot(input: SnapshotInput): InvoiceSnapshot {
+	const [problem] = issueProblems(input);
+	if (problem) throw new DomainError("VALIDATION", problem);
+	return previewSnapshot(input);
+}
+
+/**
+ * The same shape for a draft, without the checks: drives the live preview, so it has to
+ * render half-finished invoices (no client yet, empty lines).
+ */
+export function previewSnapshot(input: SnapshotInput): InvoiceSnapshot {
 	const { profile, client, paymentAccount } = input;
-	if (!client) throw new DomainError("VALIDATION", "Choose a client before issuing");
-	if (input.items.length === 0) throw new DomainError("VALIDATION", "Add at least one line item");
-	if (input.items.some((item) => item.description.trim() === "")) {
-		throw new DomainError("VALIDATION", "Every line item needs a description");
-	}
-	if (input.dueDate < input.issueDate) {
-		throw new DomainError("VALIDATION", "Due date can't be before the issue date");
-	}
-
 	const totals = computeTotals(input.items, input.discount);
-	if (totals.total < 0) throw new DomainError("VALIDATION", "Invoice total can't be negative");
-
 	return {
 		version: 1,
 		number: input.number,
@@ -108,12 +127,12 @@ export function buildSnapshot(input: SnapshotInput): InvoiceSnapshot {
 			logoFile: profile.logoFile,
 		},
 		client: {
-			name: client.name,
-			contactName: client.contactName,
-			email: client.email,
-			phone: client.phone,
-			address: { ...client.address },
-			taxId: client.taxId,
+			name: client?.name ?? "",
+			contactName: client?.contactName ?? "",
+			email: client?.email ?? "",
+			phone: client?.phone ?? "",
+			address: client ? { ...client.address } : emptyAddress(),
+			taxId: client?.taxId ?? "",
 		},
 		paymentAccount: paymentAccount
 			? {
@@ -147,3 +166,12 @@ export function buildSnapshot(input: SnapshotInput): InvoiceSnapshot {
 		branding: { ...profile.branding },
 	};
 }
+
+const emptyAddress = (): Address => ({
+	line1: "",
+	line2: "",
+	city: "",
+	region: "",
+	postalCode: "",
+	country: "",
+});
