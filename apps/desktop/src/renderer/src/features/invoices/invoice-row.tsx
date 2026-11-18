@@ -5,22 +5,25 @@ import { cn } from "@dawnstudio/ui/lib/utils";
 import { Link } from "react-router";
 import { formatAmount, formatIsoDate, joinParts } from "../../lib/format";
 
-/** Stored status plus "overdue", which is derived from the due date. */
-export type DisplayStatus = InvoiceStatus | "overdue";
+/** Stored status plus "overdue" (from the due date) and "partial" (some money received). */
+export type DisplayStatus = InvoiceStatus | "overdue" | "partial";
 
 const statusLabels: Record<DisplayStatus, string> = {
 	draft: "Draft",
 	issued: "Open",
 	overdue: "Overdue",
+	partial: "Partly paid",
 	paid: "Paid",
 	void: "Void",
 };
 
 export function displayStatus(
-	invoice: Pick<InvoiceSummary, "status" | "dueDate">,
+	invoice: Pick<InvoiceSummary, "status" | "dueDate" | "amountPaid">,
 	today: string,
 ): DisplayStatus {
-	return invoice.status === "issued" && invoice.dueDate < today ? "overdue" : invoice.status;
+	if (invoice.status !== "issued") return invoice.status;
+	if (invoice.dueDate < today) return "overdue";
+	return invoice.amountPaid > 0 ? "partial" : "issued";
 }
 
 export function StatusBadge({ status }: { status: DisplayStatus }) {

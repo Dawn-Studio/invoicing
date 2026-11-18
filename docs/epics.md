@@ -31,6 +31,7 @@ Set up once, never retype your own details.
 - 🔮 Logo crop and a separate dark-background variant
 - ✅ Payment accounts: add, edit, default, archive
 - ✅ Tax rates: add, edit, default, archive (generic, no jurisdiction)
+- ✅ Workspaces (like Linear): one per business, e.g. Personal and a company. Each is its own database file with its own profile (the issuer on its invoices), clients, invoices, accounts, tax rates and numbering. Switcher at the top of the sidebar; create, rename, delete (file goes to the Trash). The pre-workspace database became the first workspace, unmoved
 
 ### E2 · Clients ✅
 
@@ -44,7 +45,7 @@ Never retype a client's details.
 - ✅ Other contacts per client (name + email), to be CC'd on invoice emails (E6)
 - ✅ Import clients from CSV: comma/semicolon/tab, common header names, per-row errors, existing names skipped
 
-### E3 · Invoice editor 🟡
+### E3 · Invoice editor ✅
 
 Create a correct invoice quickly with a live preview.
 
@@ -54,18 +55,18 @@ Create a correct invoice quickly with a live preview.
 - ✅ Totals panel: subtotal, discount, tax summary per rate, total
 - ✅ Autosave drafts (0.6 s after typing, and on leaving); Saved / Saving / Not saved states; fields that don't parse are highlighted and block saving
 - ✅ Live preview beside the form, from `@dawnstudio/invoice-templates` (the same component the PDF will use)
-- ⬜ Saved items catalog (services/products with default rate) for quick insert
-- ⬜ Timesheet lines: hours × rate, paste or import hours (CSV)
+- ✅ Saved items catalog: Items page (search, edit, archive) with description, unit, rate, currency and tax; "From items" in the editor fills a line (rate only carries over in the same currency); bookmark button saves a line as an item
+- 🔮 Timesheet lines: paste or import tracked hours (CSV). Postponed (2026-11-18): not needed for now
 
-### E4 · Issuing & invoice lifecycle 🟡
+### E4 · Issuing & invoice lifecycle ✅
 
 Issued invoices are legal documents: numbered, frozen, auditable.
 
 - ✅ Issue flow: confirm dialog (or a list of what's missing), assign number, write snapshot, lock
 - ✅ Read-only issued invoice view rendered from the snapshot (with the logo it was issued with); "Void" stamp on voided invoices
-- ⬜ Record payments (full and partial, date, method, note); balance due
-- ⬜ Mark unpaid / undo payment
-- ⬜ Void with reason
+- ✅ Record payments (full and partial, date, method, note); balance due; "Partly paid" status; client totals count part payments. Invoices marked paid before this got one full payment in the migration
+- ✅ Mark as paid today (one payment for the balance); remove a payment to undo it (a paid invoice reopens)
+- ✅ Void with an optional reason (only without payments; the number is never reused)
 - ✅ Duplicate (any status) into a new draft; delete drafts
 - ✅ Activity timeline from `invoice_events`
 - 🔮 Credit notes linked to the original invoice
@@ -163,7 +164,7 @@ Not in current scope; the architecture leaves room (event log, main-process side
 
 - 🔮 Quotes / estimates → convert to invoice
 - 🔮 Recurring invoices (schedule, auto-draft)
-- 🔮 Multiple businesses
+- ✅ Multiple businesses → workspaces (E1)
 - 🔮 Jurisdiction-specific tax (VAT, reverse charge)
 - 🔮 Cloud sync
 

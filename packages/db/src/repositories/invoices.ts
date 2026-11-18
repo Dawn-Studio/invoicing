@@ -12,9 +12,12 @@ import {
 	type InvoiceStatus,
 	type InvoiceSummary,
 	invoiceDraftInputSchema,
+	type Payment,
+	type PaymentInput,
+	paymentInputSchema,
 } from "@dawnstudio/core";
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
-import { clients, invoiceEvents, invoiceItems, invoices, taxRates } from "../schema";
+import { clients, invoiceEvents, invoiceItems, invoices, payments, taxRates } from "../schema";
 import { clientRepository } from "./clients";
 import { likePattern, notFound, type RepositoryContext } from "./context";
 import { paymentAccountRepository } from "./payment-accounts";
@@ -135,6 +138,7 @@ export function invoiceRepository(ctx: RepositoryContext) {
 					issueDate: invoices.issueDate,
 					dueDate: invoices.dueDate,
 					total: invoices.total,
+					amountPaid: invoices.amountPaid,
 					updatedAt: invoices.updatedAt,
 				})
 				.from(invoices)
@@ -283,34 +287,93 @@ export function invoiceRepository(ctx: RepositoryContext) {
 			});
 		},
 
-		markPaid(id: string, paidAt: number = now()): Invoice {
+		payments(invoiceId: string): Payment[] {
+			return db
+				.select()
+				.from(payments)
+				.where(eq(payments.invoiceId, invoiceId))
+				.orderBy(asc(payments.date), asc(payments.createdAt))
+				.all();
+		},
+
+		/**
+		 * Records money received. A payment that settles the balance marks the invoice paid;
+		 * smaller ones leave it open with less due. Overpaying is refused.
+		 */
+		recordPayment(invoiceId: string, input: PaymentInput): Invoice {
+			const payment = paymentInputSchema.parse(input);
 			return db.transaction(() => {
-				requireStatus(id, ["issued"], "mark as paid");
-				db.update(invoices)
-					.set({ status: "paid", paidAt, updatedAt: now() })
-					.where(eq(invoices.id, id))
+				const row = requireStatus(invoiceId, ["issued"], "record a payment on");
+				const balance = row.total - row.amountPaid;
+				if (payment.amount > balance) {
+					throw new DomainError("VALIDATION", "That's more than the balance due");
+				}
+				if (payment.date < row.issueDate) {
+					throw new DomainError("VALIDATION", "Payment date can't be before the issue date");
+				}
+				const timestamp = now();
+				db.insert(payments)
+					.values({ ...payment, id: newId(), invoiceId, createdAt: timestamp })
 					.run();
-				recordEvent(id, "paid", { paidAt });
-				return get(id);
+				recordEvent(invoiceId, "payment", {
+					amount: payment.amount,
+					date: payment.date,
+					method: payment.method,
+				});
+				const amountPaid = row.amountPaid + payment.amount;
+				const settled = amountPaid >= row.total;
+				db.update(invoices)
+					.set({
+						amountPaid,
+						...(settled ? { status: "paid" as const, paidAt: timestamp } : {}),
+						updatedAt: timestamp,
+					})
+					.where(eq(invoices.id, invoiceId))
+					.run();
+				if (settled) recordEvent(invoiceId, "paid");
+				return get(invoiceId);
 			});
 		},
 
-		markUnpaid(id: string): Invoice {
+		/** Removes a payment recorded by mistake; a paid invoice becomes open again. */
+		removePayment(paymentId: string): Invoice {
 			return db.transaction(() => {
-				requireStatus(id, ["paid"], "mark as unpaid");
+				const payment =
+					db.select().from(payments).where(eq(payments.id, paymentId)).get() ?? notFound("Payment");
+				const row = requireStatus(payment.invoiceId, ["issued", "paid"], "change payments on");
+				db.delete(payments).where(eq(payments.id, paymentId)).run();
+				recordEvent(row.id, "paymentRemoved", { amount: payment.amount, date: payment.date });
+				const timestamp = now();
 				db.update(invoices)
-					.set({ status: "issued", paidAt: null, updatedAt: now() })
-					.where(eq(invoices.id, id))
+					.set({
+						amountPaid: row.amountPaid - payment.amount,
+						status: "issued",
+						paidAt: null,
+						updatedAt: timestamp,
+					})
+					.where(eq(invoices.id, row.id))
 					.run();
-				recordEvent(id, "unpaid");
-				return get(id);
+				if (row.status === "paid") recordEvent(row.id, "unpaid");
+				return get(row.id);
 			});
+		},
+
+		/** Shortcut: one payment for the whole balance, dated today. */
+		markPaid(id: string): Invoice {
+			const row = requireStatus(id, ["issued"], "mark as paid");
+			return this.recordPayment(id, { amount: row.total - row.amountPaid, date: today() });
 		},
 
 		/** Voided invoices keep their number and snapshot; the number is never reused. */
 		void(id: string, reason = ""): Invoice {
 			return db.transaction(() => {
-				requireStatus(id, ["issued"], "void");
+				const row = requireStatus(id, ["issued"], "void");
+				if (row.amountPaid > 0) {
+					throw new DomainError(
+						"INVALID_STATE",
+						"This invoice has payments. Remove them before voiding it.",
+					);
+				}
 				const timestamp = now();
 				db.update(invoices)
 					.set({ status: "void", voidedAt: timestamp, updatedAt: timestamp })

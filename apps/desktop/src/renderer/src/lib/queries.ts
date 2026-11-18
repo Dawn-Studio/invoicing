@@ -72,3 +72,19 @@ export const useTaxRates = () => useRpcQuery("taxRates.list");
 export const useCreateTaxRate = () => useRpcMutation("taxRates.create", ["taxRates"]);
 export const useUpdateTaxRate = () => useRpcMutation("taxRates.update", ["taxRates"]);
 export const useArchiveTaxRate = () => useRpcMutation("taxRates.archive", ["taxRates"]);
+
+export const useWorkspaces = () => useRpcQuery("workspaces.list");
+export const useRenameWorkspace = () => useRpcMutation("workspaces.rename", ["workspaces"]);
+
+const invoiceKeys = ["invoices", "clients"];
+export const usePayments = (id: string) => useRpcQuery("invoices.payments", { id });
+export const useRecordPayment = () => useRpcMutation("invoices.recordPayment", invoiceKeys);
+export const useRemovePayment = () => useRpcMutation("invoices.removePayment", invoiceKeys);
+export const useMarkPaid = () => useRpcMutation("invoices.markPaid", invoiceKeys);
+export const useVoidInvoice = () => useRpcMutation("invoices.void", invoiceKeys);
+
+export const useCatalog = (input?: Input<"catalog.list">) => useRpcQuery("catalog.list", input);
+export const useCreateCatalogItem = () => useRpcMutation("catalog.create", ["catalog"]);
+export const useUpdateCatalogItem = () => useRpcMutation("catalog.update", ["catalog"]);
+export const useArchiveCatalogItem = () => useRpcMutation("catalog.archive", ["catalog"]);
+export const useUnarchiveCatalogItem = () => useRpcMutation("catalog.unarchive", ["catalog"]);

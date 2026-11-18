@@ -101,6 +101,8 @@ interface IntegrationProvider<Config, Secrets> {
 
 ## Data model (initial)
 
+Each **workspace** (a separate business: its own issuer details, clients, invoices and numbering) is its own SQLite file with the tables below. `userData/workspaces.json` lists the workspaces and the open one; the main process swaps the open database when the user switches. The first workspace adopted the original `invoicing.db` in place; new ones live in `userData/workspaces/<id>.db`. Logos are shared (content-addressed) across workspaces.
+
 | Table                     | Purpose / key columns                                                                                                                                                                                      |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `business_profile`        | name, legal name, address, tax ID, email, phone, logo path, default currency, numbering pattern, next sequence, branding (accent, font, template)                                                          |

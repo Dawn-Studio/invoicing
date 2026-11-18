@@ -1,4 +1,5 @@
 import type { Db } from "../database";
+import { catalogRepository } from "./catalog";
 import { clientRepository } from "./clients";
 import { createContext, type RepositoryContext } from "./context";
 import { invoiceRepository } from "./invoices";
@@ -14,11 +15,13 @@ export function createRepositories(db: Db, overrides?: Partial<Omit<RepositoryCo
 		clients: clientRepository(ctx),
 		paymentAccounts: paymentAccountRepository(ctx),
 		taxRates: taxRateRepository(ctx),
+		catalog: catalogRepository(ctx),
 		invoices: invoiceRepository(ctx),
 		settings: settingsRepository(ctx),
 	};
 }
 
 export type Repositories = ReturnType<typeof createRepositories>;
+export type { CatalogListOptions } from "./catalog";
 export type { ClientListOptions } from "./clients";
 export type { InvoiceListOptions } from "./invoices";

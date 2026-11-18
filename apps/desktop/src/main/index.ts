@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { app, BrowserWindow, dialog, nativeTheme, shell } from "electron";
-import { initDatabase } from "./database";
 import { createHandlers } from "./handlers";
 import { registerRpc } from "./rpc";
+import { WorkspaceManager } from "./workspaces";
 
 const isMac = process.platform === "darwin";
 
@@ -55,9 +55,9 @@ function createWindow() {
 app.whenReady().then(() => {
 	app.setAppUserModelId("com.dawnstudio.invoicing");
 
-	let opened: ReturnType<typeof initDatabase>;
+	let workspaces: WorkspaceManager;
 	try {
-		opened = initDatabase();
+		workspaces = new WorkspaceManager();
 	} catch (error) {
 		dialog.showErrorBox(
 			"Invoicing couldn't open its database",
@@ -66,9 +66,9 @@ app.whenReady().then(() => {
 		app.exit(1);
 		return;
 	}
-	app.on("will-quit", () => opened.database.close());
+	app.on("will-quit", () => workspaces.close());
 
-	registerRpc(createHandlers(opened.repos));
+	registerRpc(createHandlers(workspaces));
 	createWindow();
 
 	app.on("activate", () => {

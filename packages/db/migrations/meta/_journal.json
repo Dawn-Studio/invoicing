@@ -15,6 +15,20 @@
       "when": 1794932674075,
       "tag": "0001_client_contacts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794969159981,
+      "tag": "0002_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794969583411,
+      "tag": "0003_catalog_items",
+      "breakpoints": true
     }
   ]
 }

@@ -43,6 +43,7 @@ import {
 } from "../../lib/queries";
 import { LogoPanel } from "../profile/logo-panel";
 import { ProfileForm } from "../profile/profile-form";
+import { WorkspacePanel } from "../workspaces/workspace-panel";
 import { PaymentAccountForm } from "./payment-account-form";
 import { TaxRateForm } from "./tax-rate-form";
 
@@ -50,6 +51,9 @@ export function SettingsPage() {
 	const { data: profile } = useProfile();
 	return (
 		<Page title="Settings">
+			<PageSection>
+				<WorkspacePanel />
+			</PageSection>
 			{profile ? (
 				<ProfileForm
 					profile={profile}

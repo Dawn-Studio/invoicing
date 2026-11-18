@@ -72,6 +72,17 @@ export const taxRates = sqliteTable("tax_rates", {
 	...timestamps,
 });
 
+export const catalogItems = sqliteTable("catalog_items", {
+	id: text().primaryKey(),
+	description: text().notNull(),
+	unit: text().notNull().default(""),
+	unitPrice: integer().notNull(),
+	currency: text().notNull(),
+	taxRateId: text().references(() => taxRates.id, { onDelete: "set null" }),
+	archivedAt: integer(),
+	...timestamps,
+});
+
 export const invoices = sqliteTable(
 	"invoices",
 	{
@@ -93,6 +104,9 @@ export const invoices = sqliteTable(
 		total: integer().notNull().default(0),
 		snapshot: text({ mode: "json" }).$type<InvoiceSnapshot>(),
 		issuedAt: integer(),
+		/** Sum of the invoice's payments, kept in step with the `payments` table. */
+		amountPaid: integer().notNull().default(0),
+		/** When the balance reached zero. */
 		paidAt: integer(),
 		voidedAt: integer(),
 		...timestamps,
@@ -120,6 +134,24 @@ export const invoiceItems = sqliteTable(
 		taxRate: integer().notNull().default(0),
 	},
 	(t) => [index("invoice_items_invoice_idx").on(t.invoiceId, t.position)],
+);
+
+export const payments = sqliteTable(
+	"payments",
+	{
+		id: text().primaryKey(),
+		invoiceId: text()
+			.notNull()
+			.references(() => invoices.id, { onDelete: "cascade" }),
+		/** Minor units of the invoice currency. */
+		amount: integer().notNull(),
+		/** When the money arrived (ISO date). */
+		date: text().notNull(),
+		method: text().notNull().default(""),
+		note: text().notNull().default(""),
+		createdAt: integer().notNull(),
+	},
+	(t) => [index("payments_invoice_idx").on(t.invoiceId, t.date)],
 );
 
 export const invoiceEvents = sqliteTable(

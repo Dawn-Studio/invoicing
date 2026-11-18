@@ -9,14 +9,15 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@dawnstudio/ui/components/sidebar";
-import { FileText, LayoutDashboard, type LucideIcon, Settings, Users } from "lucide-react";
+import { FileText, LayoutDashboard, type LucideIcon, Package, Settings, Users } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
-import { useProfile } from "../lib/queries";
+import { WorkspaceSwitcher } from "../features/workspaces/workspace-switcher";
 
 const mainNav: { to: string; label: string; icon: LucideIcon }[] = [
 	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
 	{ to: "/invoices", label: "Invoices", icon: FileText },
 	{ to: "/clients", label: "Clients", icon: Users },
+	{ to: "/items", label: "Items", icon: Package },
 ];
 
 function NavItem({ to, label, icon: Icon }: (typeof mainNav)[number]) {
@@ -35,12 +36,13 @@ function NavItem({ to, label, icon: Icon }: (typeof mainNav)[number]) {
 }
 
 export function AppSidebar() {
-	const { data: profile } = useProfile();
 	return (
 		<Sidebar>
 			{/* Leaves room for the macOS traffic lights and lets the user drag the window. */}
 			<SidebarHeader className="app-drag h-13 justify-center px-4 in-data-[platform=darwin]:pl-22">
-				<span className="truncate text-sm font-medium">{profile?.name ?? "Invoicing"}</span>
+				<div className="flex min-w-0">
+					<WorkspaceSwitcher />
+				</div>
 			</SidebarHeader>
 			<SidebarContent>
 				<SidebarGroup>

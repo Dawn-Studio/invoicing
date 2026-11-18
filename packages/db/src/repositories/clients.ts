@@ -103,6 +103,7 @@ export function clientRepository({ db, now, today, newId }: RepositoryContext) {
 					status: invoices.status,
 					currency: invoices.currency,
 					total: invoices.total,
+					amountPaid: invoices.amountPaid,
 					issueDate: invoices.issueDate,
 					dueDate: invoices.dueDate,
 				})
@@ -129,12 +130,12 @@ export function clientRepository({ db, now, today, newId }: RepositoryContext) {
 					outstanding: 0,
 					overdue: 0,
 				};
+				// Partial payments count as paid; the rest is still owed.
+				const balance = row.total - row.amountPaid;
 				entry.billed += row.total;
-				if (row.status === "paid") entry.paid += row.total;
-				else {
-					entry.outstanding += row.total;
-					if (row.dueDate < date) entry.overdue += row.total;
-				}
+				entry.paid += row.amountPaid;
+				entry.outstanding += balance;
+				if (balance > 0 && row.dueDate < date) entry.overdue += balance;
 				totals.set(row.currency, entry);
 			}
 			return {

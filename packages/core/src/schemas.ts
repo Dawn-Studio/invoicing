@@ -141,3 +141,25 @@ export const invoiceDraftInputSchema = z.object({
 });
 export type InvoiceDraftInput = z.input<typeof invoiceDraftInputSchema>;
 export type InvoiceDraft = z.output<typeof invoiceDraftInputSchema>;
+
+export const paymentInputSchema = z.object({
+	/** Minor units of the invoice currency. */
+	amount: z.int().min(1, "Enter an amount").max(1_000_000_000_000),
+	date: isoDateSchema,
+	/** e.g. "Bank transfer"; free text. */
+	method: text(50).default(""),
+	note: text(500).default(""),
+});
+export type PaymentInput = z.input<typeof paymentInputSchema>;
+
+/** Something you bill often, saved to fill invoice lines in one pick. */
+export const catalogItemInputSchema = z.object({
+	description: text(1000).min(1, "Description is required"),
+	unit: text(20).default(""),
+	/** Minor units of `currency`. */
+	unitPrice: z.int().min(-1_000_000_000_000).max(1_000_000_000_000),
+	currency: currencySchema,
+	/** Tax rate picked when the item is added; null = no tax. */
+	taxRateId: idSchema.nullable().default(null),
+});
+export type CatalogItemInput = z.input<typeof catalogItemInputSchema>;

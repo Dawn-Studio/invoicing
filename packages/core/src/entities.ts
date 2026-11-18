@@ -1,8 +1,10 @@
 import type { z } from "zod";
 import type {
+	catalogItemInputSchema,
 	clientInputSchema,
 	invoiceItemInputSchema,
 	paymentAccountInputSchema,
+	paymentInputSchema,
 	profileInputSchema,
 	taxRateInputSchema,
 } from "./schemas";
@@ -36,6 +38,11 @@ export interface TaxRate extends z.output<typeof taxRateInputSchema>, Timestamps
 	archivedAt: number | null;
 }
 
+export interface CatalogItem extends z.output<typeof catalogItemInputSchema>, Timestamps {
+	id: string;
+	archivedAt: number | null;
+}
+
 export const INVOICE_STATUSES = ["draft", "issued", "paid", "void"] as const;
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 
@@ -62,6 +69,8 @@ export interface Invoice extends Timestamps {
 	taxes: TaxTotal[];
 	taxTotal: number;
 	total: number;
+	/** Sum of recorded payments; the balance due is `total - amountPaid`. */
+	amountPaid: number;
 	issuedAt: number | null;
 	paidAt: number | null;
 	voidedAt: number | null;
@@ -81,10 +90,19 @@ export interface InvoiceSummary {
 	issueDate: string;
 	dueDate: string;
 	total: number;
+	amountPaid: number;
 	updatedAt: number;
 }
 
-export const INVOICE_EVENT_TYPES = ["created", "issued", "paid", "unpaid", "voided"] as const;
+export const INVOICE_EVENT_TYPES = [
+	"created",
+	"issued",
+	"payment",
+	"paymentRemoved",
+	"paid",
+	"unpaid",
+	"voided",
+] as const;
 export type InvoiceEventType = (typeof INVOICE_EVENT_TYPES)[number];
 
 export interface InvoiceEvent {
@@ -92,6 +110,12 @@ export interface InvoiceEvent {
 	invoiceId: string;
 	type: InvoiceEventType;
 	payload: Record<string, unknown>;
+	createdAt: number;
+}
+
+export interface Payment extends z.output<typeof paymentInputSchema> {
+	id: string;
+	invoiceId: string;
 	createdAt: number;
 }
 

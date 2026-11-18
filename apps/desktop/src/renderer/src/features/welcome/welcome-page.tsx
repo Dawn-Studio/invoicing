@@ -1,5 +1,11 @@
 import { Button } from "@dawnstudio/ui/components/button";
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@dawnstudio/ui/components/dropdown-menu";
+import {
 	Panel,
 	PanelBody,
 	PanelHeader,
@@ -11,15 +17,19 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router";
 import { PageSection } from "../../components/page";
-import { useProfile } from "../../lib/queries";
+import { useProfile, useWorkspaces } from "../../lib/queries";
 import { LogoPanel } from "../profile/logo-panel";
 import { ProfileForm } from "../profile/profile-form";
 import { PaymentAccountForm } from "../settings/payment-account-form";
+import { useWorkspaceActions } from "../workspaces/use-workspace-actions";
+import { WorkspaceAvatar } from "../workspaces/workspace-avatar";
 
 /** First run: business details, then (optionally) the account clients pay into. */
 export function WelcomePage() {
 	const navigate = useNavigate();
 	const { data: profile, isPending } = useProfile();
+	const { data: workspaces } = useWorkspaces();
+	const current = workspaces?.workspaces.find((w) => w.id === workspaces.activeId);
 	// Decided once on arrival, so saving the profile in step 1 doesn't bounce away mid-setup.
 	const [step, setStep] = useState<"business" | "payment" | null>(null);
 
@@ -34,7 +44,9 @@ export function WelcomePage() {
 
 	return (
 		<div className="h-full overflow-y-auto">
-			<div className="app-drag h-13 shrink-0" />
+			<div className="app-drag flex h-13 shrink-0 items-center justify-end px-4">
+				<SetupWorkspaceSwitch />
+			</div>
 			<div className="mx-auto max-w-2xl px-6 pb-16">
 				<AnimatePresence mode="wait">
 					<motion.div
@@ -50,7 +62,11 @@ export function WelcomePage() {
 								Step {step === "business" ? 1 : 2} of 2
 							</span>
 							<h1 className="text-4xl font-medium tracking-tight">
-								{step === "business" ? "Set up your business" : "Logo and payment details"}
+								{step === "business"
+									? workspaces && workspaces.workspaces.length > 1
+										? `Set up ${current?.name ?? "your business"}`
+										: "Set up your business"
+									: "Logo and payment details"}
 							</h1>
 							<p className="text-lg text-muted-foreground">
 								{step === "business"
@@ -96,5 +112,34 @@ export function WelcomePage() {
 				</AnimatePresence>
 			</div>
 		</div>
+	);
+}
+
+/** A new workspace starts here; offer a way back to the others without setting it up. */
+function SetupWorkspaceSwitch() {
+	const { data } = useWorkspaces();
+	const actions = useWorkspaceActions();
+	const others = data?.workspaces.filter((w) => w.id !== data.activeId) ?? [];
+	if (others.length === 0) return null;
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button variant="ghost" size="sm" className="app-no-drag text-muted-foreground">
+					Switch workspace
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="end" className="w-56">
+				{others.map((workspace) => (
+					<DropdownMenuItem
+						key={workspace.id}
+						disabled={actions.pending}
+						onSelect={() => actions.switchTo(workspace.id)}
+					>
+						<WorkspaceAvatar id={workspace.id} name={workspace.name} />
+						<span className="truncate">{workspace.name}</span>
+					</DropdownMenuItem>
+				))}
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }

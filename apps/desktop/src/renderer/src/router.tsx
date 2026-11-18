@@ -1,5 +1,6 @@
 import { createHashRouter } from "react-router";
 import { AppLayout } from "./app-layout";
+import { ItemsPage } from "./features/catalog/items-page";
 import { ClientPage } from "./features/clients/client-page";
 import { ClientsPage } from "./features/clients/clients-page";
 import { DashboardPage } from "./features/dashboard/dashboard-page";
@@ -20,6 +21,7 @@ export const router = createHashRouter([
 			{ path: "clients", element: <ClientsPage /> },
 			{ path: "clients/new", element: <ClientPage /> },
 			{ path: "clients/:id", element: <ClientPage /> },
+			{ path: "items", element: <ItemsPage /> },
 			{ path: "settings", element: <SettingsPage /> },
 		],
 	},

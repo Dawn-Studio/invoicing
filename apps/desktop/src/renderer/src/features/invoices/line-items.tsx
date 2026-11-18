@@ -16,8 +16,9 @@ import {
 	SelectValue,
 } from "@dawnstudio/ui/components/select";
 import { Textarea } from "@dawnstudio/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@dawnstudio/ui/components/tooltip";
 import { cn } from "@dawnstudio/ui/lib/utils";
-import { GripVertical, Plus, X } from "lucide-react";
+import { BookmarkPlus, GripVertical, Plus, X } from "lucide-react";
 import { Reorder, useDragControls } from "motion/react";
 import { type ReactNode, useId } from "react";
 import { formatAmount } from "../../lib/format";
@@ -32,6 +33,9 @@ interface LineItemsPanelProps {
 	errors: DraftErrors;
 	onChange: (items: LineState[]) => void;
 	onAdd: () => void;
+	/** Picking a saved item adds a line filled from it. */
+	catalogPicker: ReactNode;
+	onSaveToCatalog: (line: LineState) => void;
 }
 
 export function LineItemsPanel({
@@ -42,6 +46,8 @@ export function LineItemsPanel({
 	errors,
 	onChange,
 	onAdd,
+	catalogPicker,
+	onSaveToCatalog,
 }: LineItemsPanelProps) {
 	const update = (key: string, patch: Partial<LineState>) =>
 		onChange(items.map((line) => (line.key === key ? { ...line, ...patch } : line)));
@@ -55,6 +61,7 @@ export function LineItemsPanel({
 				<PanelTitle>Line items</PanelTitle>
 				<div className="flex items-center gap-3">
 					{items.length > 0 ? <PanelLabel>{items.length}</PanelLabel> : null}
+					{catalogPicker}
 					<Button type="button" variant="outline" size="sm" onClick={onAdd}>
 						<Plus />
 						Add line
@@ -86,6 +93,7 @@ export function LineItemsPanel({
 								canDrag={items.length > 1}
 								onChange={(patch) => update(line.key, patch)}
 								onRemove={() => remove(line.key)}
+								onSaveToCatalog={() => onSaveToCatalog(line)}
 							/>
 						))}
 					</Reorder.Group>
@@ -106,6 +114,7 @@ function LineRow({
 	canDrag,
 	onChange,
 	onRemove,
+	onSaveToCatalog,
 }: {
 	line: LineState;
 	currency: string;
@@ -117,6 +126,7 @@ function LineRow({
 	canDrag: boolean;
 	onChange: (patch: Partial<LineState>) => void;
 	onRemove: () => void;
+	onSaveToCatalog: () => void;
 }) {
 	const controls = useDragControls();
 	const quantityError = errors[`items.${line.key}.quantity`];
@@ -233,16 +243,39 @@ function LineRow({
 					<p className="text-sm text-destructive">{quantityError ?? priceError}</p>
 				) : null}
 			</div>
-			<Button
-				type="button"
-				variant="ghost"
-				size="icon-sm"
-				aria-label="Remove line"
-				className="mt-0.5 text-muted-foreground"
-				onClick={onRemove}
-			>
-				<X />
-			</Button>
+			<div className="mt-0.5 flex flex-col gap-1">
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon-sm"
+							aria-label="Remove line"
+							className="text-muted-foreground"
+							onClick={onRemove}
+						>
+							<X />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="left">Remove line</TooltipContent>
+				</Tooltip>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon-sm"
+							aria-label="Save to items"
+							className="text-muted-foreground"
+							disabled={line.description.trim() === ""}
+							onClick={onSaveToCatalog}
+						>
+							<BookmarkPlus />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="left">Save to items</TooltipContent>
+				</Tooltip>
+			</div>
 		</Reorder.Item>
 	);
 }

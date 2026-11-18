@@ -12,18 +12,24 @@ import {
 	PanelTitle,
 	RowList,
 } from "@dawnstudio/ui/components/panel";
-import { Spinner } from "@dawnstudio/ui/components/spinner";
 import { cn } from "@dawnstudio/ui/lib/utils";
-import { Copy } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router";
+import { X } from "lucide-react";
+import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { Page, PageSection } from "../../components/page";
-import { formatAmount, formatIsoDate, formatTimestamp } from "../../lib/format";
+import { formatAmount, formatIsoDate, formatTimestamp, joinParts } from "../../lib/format";
 import { showSaveError } from "../../lib/forms";
-import { useDuplicateInvoice, useInvoice, useLogoFile, useRpcQuery } from "../../lib/queries";
+import {
+	useInvoice,
+	useLogoFile,
+	usePayments,
+	useRemovePayment,
+	useRpcQuery,
+} from "../../lib/queries";
 import { DraftEditor } from "./draft-editor";
 import { InvoicePreview } from "./invoice-preview";
 import { displayStatus, StatusBadge } from "./invoice-row";
+import { IssuedActions } from "./issued-actions";
 
 /** `/invoices/:id`: the editor for drafts, the locked invoice otherwise. */
 export function InvoicePage() {
@@ -58,35 +64,20 @@ export function InvoicePage() {
 }
 
 function IssuedInvoice({ invoice }: { invoice: Invoice }) {
-	const navigate = useNavigate();
-	const duplicate = useDuplicateInvoice();
 	const { data: logo } = useLogoFile(invoice.snapshot?.issuer.logoFile);
 	const { data: events = [] } = useRpcQuery("invoices.events", { id: invoice.id });
 	const snapshot = invoice.snapshot;
 	const today = todayIso();
 	const status = displayStatus(invoice, today);
-
-	const onDuplicate = async () => {
-		try {
-			const copy = await duplicate.mutateAsync({ id: invoice.id });
-			navigate(`/invoices/${copy.id}`);
-			toast.success("Duplicated as a new draft");
-		} catch (error) {
-			showSaveError(error);
-		}
-	};
+	const balance = invoice.total - invoice.amountPaid;
+	const money = (minor: number) => formatAmount(minor, invoice.currency);
 
 	return (
 		<Page
 			title={<span className="font-mono">{invoice.number}</span>}
 			back={{ to: "/invoices", label: "Invoices" }}
 			className="@container max-w-[1440px]"
-			actions={
-				<Button size="sm" variant="outline" onClick={onDuplicate} disabled={duplicate.isPending}>
-					{duplicate.isPending ? <Spinner /> : <Copy />}
-					Duplicate
-				</Button>
-			}
+			actions={<IssuedActions invoice={invoice} />}
 		>
 			<div className="grid items-start gap-6 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)]">
 				<div className="flex min-w-0 flex-col gap-3">
@@ -102,12 +93,27 @@ function IssuedInvoice({ invoice }: { invoice: Invoice }) {
 								</PanelLabel>
 							</PanelHeader>
 							<PanelBody className="flex flex-col gap-5">
-								<Amount
-									value={formatAmount(invoice.total, invoice.currency)}
-									unit={invoice.currency}
-									className={cn(status === "void" && "text-muted-foreground line-through")}
-								/>
+								<div className="flex flex-col gap-1">
+									<span className="text-sm text-muted-foreground">
+										{invoice.status === "issued" ? "Balance due" : "Total"}
+									</span>
+									<Amount
+										value={money(invoice.status === "issued" ? balance : invoice.total)}
+										unit={invoice.currency}
+										className={cn(status === "void" && "text-muted-foreground line-through")}
+									/>
+								</div>
 								<DetailList>
+									{invoice.amountPaid > 0 && invoice.status === "issued" ? (
+										<>
+											<DetailRow label="Total" className="tabular-nums">
+												{money(invoice.total)}
+											</DetailRow>
+											<DetailRow label="Paid so far" className="tabular-nums">
+												{money(invoice.amountPaid)}
+											</DetailRow>
+										</>
+									) : null}
 									<DetailRow label="Client">
 										{invoice.clientId ? (
 											<Link
@@ -125,15 +131,15 @@ function IssuedInvoice({ invoice }: { invoice: Invoice }) {
 									{snapshot?.paymentAccount ? (
 										<DetailRow label="Paid to">{snapshot.paymentAccount.label}</DetailRow>
 									) : null}
-									{invoice.paidAt ? (
-										<DetailRow label="Paid on">{formatTimestamp(invoice.paidAt)}</DetailRow>
-									) : null}
 								</DetailList>
 							</PanelBody>
 						</Panel>
 					</PageSection>
 					<PageSection>
-						<ActivityPanel events={events} />
+						<PaymentsPanel invoice={invoice} />
+					</PageSection>
+					<PageSection>
+						<ActivityPanel events={events} currency={invoice.currency} />
 					</PageSection>
 				</div>
 				<PageSection className="@3xl:sticky @3xl:top-2">
@@ -141,7 +147,7 @@ function IssuedInvoice({ invoice }: { invoice: Invoice }) {
 						<InvoicePreview
 							invoice={snapshot}
 							logoSrc={logo}
-							stamp={invoice.status === "void" ? "Void" : null}
+							stamp={invoice.status === "void" ? "Void" : invoice.status === "paid" ? "Paid" : null}
 						/>
 					) : null}
 				</PageSection>
@@ -151,7 +157,8 @@ function IssuedInvoice({ invoice }: { invoice: Invoice }) {
 }
 
 function dueLabel(invoice: Invoice, today: string): string {
-	if (invoice.status === "paid") return "Paid";
+	if (invoice.status === "paid")
+		return invoice.paidAt ? `Paid ${formatTimestamp(invoice.paidAt)}` : "Paid";
 	if (invoice.status === "void") return "Void";
 	const days = Math.round((Date.parse(invoice.dueDate) - Date.parse(today)) / 86_400_000);
 	if (days === 0) return "Due today";
@@ -159,15 +166,94 @@ function dueLabel(invoice: Invoice, today: string): string {
 	return `${-days} ${days === -1 ? "day" : "days"} overdue`;
 }
 
-const eventText: Record<InvoiceEvent["type"], (payload: Record<string, unknown>) => string> = {
-	created: () => "Draft created",
-	issued: (payload) => `Issued as ${String(payload.number ?? "")}`.trim(),
-	paid: () => "Marked as paid",
-	unpaid: () => "Marked as unpaid",
-	voided: (payload) => (payload.reason ? `Voided: ${String(payload.reason)}` : "Voided"),
-};
+/** Money received; hidden on void invoices with nothing recorded. */
+function PaymentsPanel({ invoice }: { invoice: Invoice }) {
+	const { data: payments = [] } = usePayments(invoice.id);
+	const remove = useRemovePayment();
+	if (invoice.status === "void" && payments.length === 0) return null;
 
-function ActivityPanel({ events }: { events: InvoiceEvent[] }) {
+	const onRemove = async (id: string) => {
+		try {
+			await remove.mutateAsync({ id });
+			toast.success("Payment removed");
+		} catch (error) {
+			showSaveError(error);
+		}
+	};
+
+	return (
+		<Panel>
+			<PanelHeader>
+				<PanelTitle>Payments</PanelTitle>
+				{payments.length > 0 ? <PanelLabel>{payments.length}</PanelLabel> : null}
+			</PanelHeader>
+			<PanelBody>
+				{payments.length === 0 ? (
+					<p className="text-[0.9375rem] text-muted-foreground">
+						Nothing received yet. Record a payment when the money arrives; part payments leave the
+						rest open.
+					</p>
+				) : (
+					<RowList className="[&>li]:py-3.5">
+						{payments.map((payment) => (
+							<li key={payment.id} className="flex items-center gap-4 text-[0.9375rem]">
+								<div className="min-w-0 flex-1">
+									<div>{formatIsoDate(payment.date)}</div>
+									{payment.method || payment.note ? (
+										<div className="truncate text-sm text-muted-foreground">
+											{joinParts(payment.method, payment.note)}
+										</div>
+									) : null}
+								</div>
+								<span className="tabular-nums">
+									{formatAmount(payment.amount, invoice.currency)}
+								</span>
+								{invoice.status !== "void" ? (
+									<Button
+										variant="ghost"
+										size="icon-sm"
+										aria-label="Remove payment"
+										className="text-muted-foreground"
+										disabled={remove.isPending}
+										onClick={() => onRemove(payment.id)}
+									>
+										<X />
+									</Button>
+								) : null}
+							</li>
+						))}
+					</RowList>
+				)}
+			</PanelBody>
+		</Panel>
+	);
+}
+
+type EventPayload = Record<string, unknown>;
+
+function eventText(event: InvoiceEvent, currency: string): string {
+	const p: EventPayload = event.payload;
+	const amount =
+		typeof p.amount === "number" ? `${formatAmount(p.amount, currency)} ${currency}` : "";
+	switch (event.type) {
+		case "created":
+			return "Draft created";
+		case "issued":
+			return `Issued as ${String(p.number ?? "")}`.trim();
+		case "payment":
+			return `Payment of ${amount} received`;
+		case "paymentRemoved":
+			return `Payment of ${amount} removed`;
+		case "paid":
+			return "Paid in full";
+		case "unpaid":
+			return "Reopened";
+		case "voided":
+			return p.reason ? `Voided: ${String(p.reason)}` : "Voided";
+	}
+}
+
+function ActivityPanel({ events, currency }: { events: InvoiceEvent[]; currency: string }) {
 	return (
 		<Panel>
 			<PanelHeader>
@@ -180,7 +266,7 @@ function ActivityPanel({ events }: { events: InvoiceEvent[] }) {
 							key={event.id}
 							className="flex items-baseline justify-between gap-4 text-[0.9375rem]"
 						>
-							<span>{eventText[event.type](event.payload)}</span>
+							<span>{eventText(event, currency)}</span>
 							<span className="shrink-0 text-sm text-muted-foreground">
 								{formatTimestamp(event.createdAt)}
 							</span>

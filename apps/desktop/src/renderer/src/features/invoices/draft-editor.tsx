@@ -1,12 +1,15 @@
 import {
 	addDays,
+	type CatalogItem,
 	computeTotals,
 	formatInvoiceNumber,
 	formatRate,
+	fromMinor,
 	type Invoice,
 	isIsoDate,
 	issueProblems,
 	previewSnapshot,
+	toMinor,
 } from "@dawnstudio/core";
 import { Amount } from "@dawnstudio/ui/components/amount";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@dawnstudio/ui/components/field";
@@ -31,6 +34,7 @@ import { Textarea } from "@dawnstudio/ui/components/textarea";
 import { cn } from "@dawnstudio/ui/lib/utils";
 import { type ReactNode, useId, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
+import { toast } from "sonner";
 import { CurrencySelect } from "../../components/currency-select";
 import { Page, PageSection } from "../../components/page";
 import { formatAmount, joinParts } from "../../lib/format";
@@ -41,6 +45,8 @@ import {
 	useProfile,
 	useTaxRates,
 } from "../../lib/queries";
+import { CatalogItemDialog, type ItemDialogState } from "../catalog/catalog-item-dialog";
+import { CatalogPicker } from "./catalog-picker";
 import { ClientSelect } from "./client-select";
 import { DraftActions } from "./draft-actions";
 import {
@@ -124,6 +130,31 @@ export function DraftEditor({ invoice }: { invoice: Invoice }) {
 			discount,
 		}),
 	];
+
+	const [itemDialog, setItemDialog] = useState<ItemDialogState>({ mode: "closed" });
+
+	/** A line filled from a saved item; its rate only carries over in the same currency. */
+	const addFromCatalog = (item: CatalogItem) => {
+		const taxRate = taxRates.find((rate) => rate.id === item.taxRateId) ?? null;
+		const sameCurrency = item.currency === state.currency;
+		setState((current) => ({
+			...current,
+			items: [
+				...current.items,
+				{
+					...emptyLine(taxRate),
+					description: item.description,
+					unit: item.unit,
+					unitPrice: sameCurrency ? fromMinor(item.unitPrice, item.currency) : "",
+				},
+			],
+		}));
+		if (!sameCurrency) {
+			toast.info(`${item.description} is priced in ${item.currency}`, {
+				description: `Enter the rate in ${state.currency}.`,
+			});
+		}
+	};
 
 	const set = (patch: Partial<DraftState>) => setState((current) => ({ ...current, ...patch }));
 	const defaultRate = taxRates.find((rate) => rate.isDefault) ?? null;
@@ -295,6 +326,25 @@ export function DraftEditor({ invoice }: { invoice: Invoice }) {
 									items: [...current.items, emptyLine(defaultRate)],
 								}))
 							}
+							catalogPicker={<CatalogPicker currency={state.currency} onPick={addFromCatalog} />}
+							onSaveToCatalog={(line) => {
+								let unitPrice = 0;
+								try {
+									unitPrice = line.unitPrice.trim() ? toMinor(line.unitPrice, state.currency) : 0;
+								} catch {
+									// Saved without a rate; it can be set in the item dialog.
+								}
+								setItemDialog({
+									mode: "new",
+									initial: {
+										description: line.description.trim(),
+										unit: line.unit,
+										unitPrice,
+										currency: state.currency,
+										taxRateId: line.taxRateId,
+									},
+								});
+							}}
 						/>
 					</PageSection>
 
@@ -370,6 +420,7 @@ export function DraftEditor({ invoice }: { invoice: Invoice }) {
 					</PageSection>
 				</div>
 
+				<CatalogItemDialog state={itemDialog} onClose={() => setItemDialog({ mode: "closed" })} />
 				<PageSection className="@3xl:sticky @3xl:top-2">
 					{preview ? <InvoicePreview invoice={preview} logoSrc={logo} draft /> : null}
 				</PageSection>

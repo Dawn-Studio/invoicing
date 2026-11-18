@@ -281,22 +281,62 @@ describe("invoices", () => {
 		expect(repos.profile.get()?.nextSequence).toBe(1);
 	});
 
-	it("moves through paid, unpaid and void", () => {
+	it("records partial and full payments, and removes them", () => {
 		const { client } = setup();
 		const id = fillDraft(client.id).id;
 		expectDomainError(() => repos.invoices.markPaid(id), "INVALID_STATE");
-		repos.invoices.issue(id);
-		expect(repos.invoices.markPaid(id, 123).paidAt).toBe(123);
+		const { total } = repos.invoices.issue(id);
+
+		const partial = repos.invoices.recordPayment(id, {
+			amount: 10_000,
+			date: "2026-11-20",
+			method: "Bank transfer",
+		});
+		expect(partial).toMatchObject({ status: "issued", amountPaid: 10_000, paidAt: null });
+		expectDomainError(
+			() => repos.invoices.recordPayment(id, { amount: total, date: "2026-11-20" }),
+			"VALIDATION",
+		);
+		expectDomainError(
+			() => repos.invoices.recordPayment(id, { amount: 1, date: "2026-01-01" }),
+			"VALIDATION",
+		);
+		// Can't void an invoice with money on it.
 		expectDomainError(() => repos.invoices.void(id), "INVALID_STATE");
-		expect(repos.invoices.markUnpaid(id).status).toBe("issued");
+
+		const paid = repos.invoices.markPaid(id);
+		expect(paid).toMatchObject({ status: "paid", amountPaid: total });
+		expect(paid.paidAt).not.toBeNull();
+		expectDomainError(() => repos.invoices.markPaid(id), "INVALID_STATE");
+
+		// Sorted by date: the "mark paid" payment is dated today, before the partial one.
+		const [second, first] = repos.invoices.payments(id);
+		expect([first?.amount, second?.amount]).toEqual([10_000, total - 10_000]);
+		const reopened = repos.invoices.removePayment(second?.id ?? "");
+		expect(reopened).toMatchObject({ status: "issued", amountPaid: 10_000, paidAt: null });
+		repos.invoices.removePayment(first?.id ?? "");
+
 		expect(repos.invoices.void(id, "Wrong client").status).toBe("void");
 		expect(repos.invoices.events(id).map((e) => e.type)).toEqual([
 			"created",
 			"issued",
+			"payment",
+			"payment",
 			"paid",
+			"paymentRemoved",
 			"unpaid",
+			"paymentRemoved",
 			"voided",
 		]);
+	});
+
+	it("counts partial payments in client totals", () => {
+		const { client } = setup();
+		const id = fillDraft(client.id).id;
+		const { total } = repos.invoices.issue(id);
+		repos.invoices.recordPayment(id, { amount: 5_000, date: "2026-11-17" });
+		const [usd] = repos.clients.stats(client.id).totals;
+		expect(usd).toMatchObject({ billed: total, paid: 5_000, outstanding: total - 5_000 });
 	});
 
 	it("duplicates into a fresh draft and deletes drafts", () => {
@@ -365,5 +405,35 @@ describe("database file", () => {
 		const restored = openDatabase({ file: join(dir, "backup.db"), migrationsFolder });
 		expect(createRepositories(restored.db).profile.get()?.name).toBe("Dawn Studio");
 		restored.close();
+	});
+});
+
+describe("catalog", () => {
+	it("saves, searches, edits and archives items", () => {
+		const vat = repos.taxRates.create({ name: "VAT", rate: 2000 });
+		const design = repos.catalog.create({
+			description: "Design work",
+			unit: "h",
+			unitPrice: 9_500,
+			currency: "eur",
+			taxRateId: vat.id,
+		});
+		repos.catalog.create({ description: "Hosting", unit: "mo", unitPrice: 4_000, currency: "EUR" });
+		expect(design).toMatchObject({ currency: "EUR", taxRateId: vat.id, archivedAt: null });
+		expect(repos.catalog.list().map((i) => i.description)).toEqual(["Design work", "Hosting"]);
+		expect(repos.catalog.list({ search: "host" }).map((i) => i.description)).toEqual(["Hosting"]);
+
+		expect(repos.catalog.update(design.id, { ...design, unitPrice: 10_000 }).unitPrice).toBe(
+			10_000,
+		);
+		expect(() => repos.catalog.create({ description: "", unitPrice: 1, currency: "EUR" })).toThrow(
+			"Description is required",
+		);
+
+		repos.catalog.archive(design.id);
+		expect(repos.catalog.list().map((i) => i.description)).toEqual(["Hosting"]);
+		expect(repos.catalog.list({ includeArchived: true })).toHaveLength(2);
+		repos.catalog.unarchive(design.id);
+		expect(repos.catalog.list()).toHaveLength(2);
 	});
 });
