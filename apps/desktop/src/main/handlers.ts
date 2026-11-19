@@ -19,11 +19,15 @@ import {
 	revealExported,
 	saveExportSettings,
 } from "./pdf";
+import { getPalette, getTheme, setPalette, setTheme } from "./preferences";
 import { exportReport } from "./reports";
 import type { Handlers } from "./rpc";
 import type { WorkspaceManager } from "./workspaces";
 
-export function createHandlers(workspaces: WorkspaceManager): Handlers {
+export function createHandlers(
+	workspaces: WorkspaceManager,
+	{ onThemeChanged }: { onThemeChanged: () => void },
+): Handlers {
 	// Always the open workspace's repositories; switching workspaces replaces them.
 	const repos = () => workspaces.repos;
 	/** Reports open in the profile's currency until there are invoices to pick from. */
@@ -34,6 +38,18 @@ export function createHandlers(workspaces: WorkspaceManager): Handlers {
 			version: app.getVersion(),
 			dataPath: workspaces.databasePath,
 		}),
+
+		"preferences.theme": () => getTheme(),
+		"preferences.setTheme": ({ theme }) => {
+			setTheme(theme);
+			onThemeChanged();
+			return theme;
+		},
+		"preferences.palette": () => getPalette(),
+		"preferences.setPalette": ({ palette }) => {
+			setPalette(palette);
+			return palette;
+		},
 
 		"workspaces.list": () => workspaces.list(),
 		"workspaces.create": ({ name }) => workspaces.create(name),

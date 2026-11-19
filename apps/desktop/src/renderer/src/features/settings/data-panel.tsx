@@ -65,12 +65,12 @@ const plural = (count: number, one: string, many = `${one}s`) =>
 
 const SHOWN = 5;
 
-/** Where the data lives, automatic backups of the open workspace, and backup files. */
-export function DataPanel() {
-	const { data: info } = useAppInfo();
-	const { data: backups = [] } = useRpcQuery("backups.list", undefined, { staleTime: 0 });
+/**
+ * Back up, save a backup file, and restore (with its confirmation dialog). Used by the
+ * settings panel and by the menu and command palette; render `dialog` wherever it's used.
+ */
+export function useBackupActions() {
 	const queryClient = useQueryClient();
-	const [showAll, setShowAll] = useState(false);
 	const [busy, setBusy] = useState<"backup" | "export" | "inspect" | null>(null);
 	const [preview, setPreview] = useState<BackupPreview | null>(null);
 
@@ -85,29 +85,42 @@ export function DataPanel() {
 		}
 	};
 
-	const backUpNow = () =>
-		run("backup", async () => {
-			queryClient.setQueryData(["backups", "list", null], await rpc("backups.create"));
-			toast.success("Backed up");
-		});
-	const exportBackup = () =>
-		run("export", async () => {
-			const result = await rpc("backups.export");
-			if (!result) return;
-			const { path } = result;
-			toast.success("Backup saved", {
-				description: path.split(/[\\/]/).pop(),
-				action: {
-					label: revealLabel,
-					onClick: () => void rpc("files.reveal", { path }).catch(showSaveError),
-				},
-			});
-		});
-	const inspect = (name?: string) =>
-		run("inspect", async () => {
-			const result = await rpc("backups.inspect", { name });
-			if (result) setPreview(result);
-		});
+	return {
+		busy,
+		backUpNow: () =>
+			run("backup", async () => {
+				queryClient.setQueryData(["backups", "list", null], await rpc("backups.create"));
+				toast.success("Backed up");
+			}),
+		exportBackup: () =>
+			run("export", async () => {
+				const result = await rpc("backups.export");
+				if (!result) return;
+				const { path } = result;
+				toast.success("Backup saved", {
+					description: path.split(/[\\/]/).pop(),
+					action: {
+						label: revealLabel,
+						onClick: () => void rpc("files.reveal", { path }).catch(showSaveError),
+					},
+				});
+			}),
+		/** Opens the restore dialog for one of the workspace's backups, or a file the user picks. */
+		inspect: (name?: string) =>
+			run("inspect", async () => {
+				const result = await rpc("backups.inspect", { name });
+				if (result) setPreview(result);
+			}),
+		dialog: <RestoreDialog preview={preview} onClose={() => setPreview(null)} />,
+	};
+}
+
+/** Where the data lives, automatic backups of the open workspace, and backup files. */
+export function DataPanel() {
+	const { data: info } = useAppInfo();
+	const { data: backups = [] } = useRpcQuery("backups.list", undefined, { staleTime: 0 });
+	const [showAll, setShowAll] = useState(false);
+	const { busy, backUpNow, exportBackup, inspect, dialog } = useBackupActions();
 
 	const visible = showAll ? backups : backups.slice(0, SHOWN);
 
@@ -116,7 +129,12 @@ export function DataPanel() {
 			<PanelHeader>
 				<PanelTitle>Data & backups</PanelTitle>
 				<div className="flex items-center gap-1">
-					<Button variant="outline" size="sm" disabled={busy !== null} onClick={backUpNow}>
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={busy !== null}
+						onClick={() => void backUpNow()}
+					>
 						{busy === "backup" ? <Spinner /> : <DatabaseBackup />}
 						Back up now
 					</Button>
@@ -127,11 +145,11 @@ export function DataPanel() {
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
-							<DropdownMenuItem disabled={busy !== null} onSelect={exportBackup}>
+							<DropdownMenuItem disabled={busy !== null} onSelect={() => void exportBackup()}>
 								<HardDriveDownload />
 								Save backup as…
 							</DropdownMenuItem>
-							<DropdownMenuItem disabled={busy !== null} onSelect={() => inspect()}>
+							<DropdownMenuItem disabled={busy !== null} onSelect={() => void inspect()}>
 								<ArchiveRestore />
 								Restore from file…
 							</DropdownMenuItem>
@@ -185,7 +203,7 @@ export function DataPanel() {
 									variant="ghost"
 									size="sm"
 									disabled={busy !== null}
-									onClick={() => inspect(backup.name)}
+									onClick={() => void inspect(backup.name)}
 								>
 									Restore…
 								</Button>
@@ -209,7 +227,7 @@ export function DataPanel() {
 				14. A backup is also made before app updates change your data and before a restore.
 			</PanelFooter>
 
-			<RestoreDialog preview={preview} onClose={() => setPreview(null)} />
+			{dialog}
 		</Panel>
 	);
 }

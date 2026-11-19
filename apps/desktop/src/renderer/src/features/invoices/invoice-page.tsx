@@ -1,5 +1,4 @@
 import { type Invoice, type InvoiceEvent, todayIso } from "@dawnstudio/core";
-import { Alert, AlertDescription, AlertTitle } from "@dawnstudio/ui/components/alert";
 import { Amount } from "@dawnstudio/ui/components/amount";
 import { Button } from "@dawnstudio/ui/components/button";
 import {
@@ -17,6 +16,7 @@ import { X } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { Page, PageSection } from "../../components/page";
+import { LoadError, NotFound } from "../../components/states";
 import { formatAmount, formatIsoDate, formatTimestamp, joinParts } from "../../lib/format";
 import { showSaveError } from "../../lib/forms";
 import {
@@ -26,6 +26,7 @@ import {
 	useRemovePayment,
 	useRpcQuery,
 } from "../../lib/queries";
+import { RpcError } from "../../lib/rpc";
 import { DraftEditor } from "./draft-editor";
 import { InvoicePreview } from "./invoice-preview";
 import { displayStatus, StatusBadge } from "./invoice-row";
@@ -34,7 +35,7 @@ import { IssuedActions } from "./issued-actions";
 /** `/invoices/:id`: the editor for drafts, the locked invoice otherwise. */
 export function InvoicePage() {
 	const { id } = useParams();
-	const { data: invoice, isPending, error } = useInvoice(id);
+	const { data: invoice, isPending, error, refetch } = useInvoice(id);
 
 	if (isPending) {
 		return (
@@ -47,10 +48,15 @@ export function InvoicePage() {
 		return (
 			<Page title="Invoice" back={{ to: "/invoices", label: "Invoices" }}>
 				<PageSection>
-					<Alert>
-						<AlertTitle>Invoice not found</AlertTitle>
-						<AlertDescription>It may have been deleted.</AlertDescription>
-					</Alert>
+					{error instanceof RpcError && error.code !== "NOT_FOUND" ? (
+						<LoadError error={error} retry={() => void refetch()} />
+					) : (
+						<NotFound
+							title="Invoice not found"
+							description="It may have been deleted, or the link is out of date."
+							back={{ to: "/invoices", label: "All invoices" }}
+						/>
+					)}
 				</PageSection>
 			</Page>
 		);

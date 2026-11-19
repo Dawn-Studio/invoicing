@@ -25,8 +25,11 @@ import {
 	RowList,
 } from "@dawnstudio/ui/components/panel";
 import { Ellipsis, Plus } from "lucide-react";
+import type * as React from "react";
 import { useState } from "react";
+import { Navigate, useParams } from "react-router";
 import { toast } from "sonner";
+import { ShortcutList } from "../../components/global-hotkeys";
 import { Page, PageSection } from "../../components/page";
 import { showSaveError } from "../../lib/forms";
 import {
@@ -39,52 +42,118 @@ import {
 	useUpdateTaxRate,
 } from "../../lib/queries";
 import { LogoPanel } from "../profile/logo-panel";
-import { ProfileForm } from "../profile/profile-form";
+import { ProfileForm, type ProfileSection } from "../profile/profile-form";
 import { WorkspacePanel } from "../workspaces/workspace-panel";
+import { PalettePanel, ThemePanel } from "./appearance-panel";
 import { BrandingPanel } from "./branding-panel";
 import { DataPanel } from "./data-panel";
 import { EmailPanel } from "./email-panel";
 import { ExportPanel } from "./export-panel";
 import { PaymentAccountForm } from "./payment-account-form";
+import { SETTINGS_SECTIONS, type SettingsSectionId } from "./sections";
 import { TaxRateForm } from "./tax-rate-form";
 
+/** `/settings/:section`: one settings page, picked in the settings sidebar. */
 export function SettingsPage() {
-	const { data: profile } = useProfile();
+	const { section: id } = useParams();
+	const section = SETTINGS_SECTIONS.find((s) => s.id === id);
+	if (!section) return <Navigate to="/settings/general" replace />;
+
 	return (
-		<Page title="Settings">
-			<PageSection>
-				<WorkspacePanel />
+		<Page title="Settings" className="max-w-2xl gap-5">
+			<PageSection className="flex flex-col gap-1.5 pt-2 pb-3">
+				<h2 className="text-2xl font-semibold tracking-tight">{section.label}</h2>
+				<p className="text-[0.9375rem] text-muted-foreground">{section.description}</p>
 			</PageSection>
-			{profile ? (
-				<ProfileForm
-					profile={profile}
-					submitLabel="Save changes"
-					onSaved={() => toast.success("Saved")}
-					afterBusiness={<LogoPanel />}
-				/>
-			) : null}
-			{profile ? (
+			<SectionContent id={section.id} />
+		</Page>
+	);
+}
+
+function SectionContent({ id }: { id: SettingsSectionId }) {
+	const { data: profile } = useProfile();
+	const profileForm = (sections: ProfileSection[], afterBusiness?: React.ReactNode) =>
+		profile ? (
+			<ProfileForm
+				key={id}
+				profile={profile}
+				sections={sections}
+				submitLabel="Save changes"
+				onSaved={() => toast.success("Saved")}
+				afterBusiness={afterBusiness}
+			/>
+		) : null;
+
+	switch (id) {
+		case "general":
+			return (
+				<PageSection>
+					<WorkspacePanel />
+				</PageSection>
+			);
+		case "business":
+			return profileForm(["business", "address"], <LogoPanel />);
+		case "invoices":
+			return (
+				<>
+					{profileForm(["invoicing"])}
+					<PageSection>
+						<ExportPanel />
+					</PageSection>
+				</>
+			);
+		case "design":
+			return profile ? (
 				<PageSection>
 					<BrandingPanel key={profile.updatedAt} profile={profile} />
 				</PageSection>
-			) : null}
-			<PageSection>
-				<ExportPanel />
-			</PageSection>
-			<PageSection>
-				<EmailPanel />
-			</PageSection>
-			<PageSection>
-				<PaymentAccountsPanel defaultCurrency={profile?.defaultCurrency} />
-			</PageSection>
-			<PageSection>
-				<TaxRatesPanel />
-			</PageSection>
-			<PageSection>
-				<DataPanel />
-			</PageSection>
-		</Page>
-	);
+			) : null;
+		case "payments":
+			return (
+				<PageSection>
+					<PaymentAccountsPanel defaultCurrency={profile?.defaultCurrency} />
+				</PageSection>
+			);
+		case "taxes":
+			return (
+				<PageSection>
+					<TaxRatesPanel />
+				</PageSection>
+			);
+		case "email":
+			return (
+				<PageSection>
+					<EmailPanel />
+				</PageSection>
+			);
+		case "appearance":
+			return (
+				<>
+					<PageSection>
+						<ThemePanel />
+					</PageSection>
+					<PageSection>
+						<PalettePanel />
+					</PageSection>
+				</>
+			);
+		case "shortcuts":
+			return (
+				<PageSection>
+					<Panel>
+						<PanelBody>
+							<ShortcutList />
+						</PanelBody>
+					</Panel>
+				</PageSection>
+			);
+		case "data":
+			return (
+				<PageSection>
+					<DataPanel />
+				</PageSection>
+			);
+	}
 }
 
 /** Dialog state: closed, adding a new record, or editing one. */

@@ -54,10 +54,21 @@ interface ProfileFormProps {
 	onSaved?: (profile: BusinessProfile) => void;
 	/** Rendered between the business details and the address, e.g. the logo panel. */
 	afterBusiness?: ReactNode;
+	/** Which panels to show (all by default). Saving always sends the whole profile. */
+	sections?: ProfileSection[];
 }
 
+export type ProfileSection = "business" | "address" | "invoicing";
+const ALL_SECTIONS: ProfileSection[] = ["business", "address", "invoicing"];
+
 /** Business details, address and invoicing defaults, as a column of panels. */
-export function ProfileForm({ profile, submitLabel, onSaved, afterBusiness }: ProfileFormProps) {
+export function ProfileForm({
+	profile,
+	submitLabel,
+	onSaved,
+	afterBusiness,
+	sections = ALL_SECTIONS,
+}: ProfileFormProps) {
 	const save = useSaveProfile();
 	const form = useForm<ProfileValues, unknown, ProfileOutput>({
 		resolver: zodResolver(profileInputSchema),
@@ -78,46 +89,56 @@ export function ProfileForm({ profile, submitLabel, onSaved, afterBusiness }: Pr
 	return (
 		<FormProvider {...form}>
 			<form onSubmit={onSubmit} className="contents" noValidate>
-				<PageSection>
-					<Panel>
-						<PanelHeader>
-							<PanelTitle>Your business</PanelTitle>
-						</PanelHeader>
-						<PanelBody className="grid grid-cols-2 gap-x-4 gap-y-5">
-							<TextField<ProfileValues>
-								name="name"
-								label="Business name"
-								placeholder="Dawn Studio"
-								className="col-span-2"
-								autoFocus={!profile}
-							/>
-							<TextField<ProfileValues>
-								name="legalName"
-								label="Legal name"
-								description="If it differs, e.g. your registered company name."
-								className="col-span-2"
-							/>
-							<TextField<ProfileValues> name="email" label="Email" type="email" />
-							<TextField<ProfileValues> name="phone" label="Phone" type="tel" />
-							<TextField<ProfileValues> name="website" label="Website" placeholder="dawn.studio" />
-							<TextField<ProfileValues>
-								name="taxId"
-								label="Tax or VAT number"
-								inputClassName="font-mono"
-							/>
-						</PanelBody>
-					</Panel>
-				</PageSection>
+				{sections.includes("business") ? (
+					<PageSection>
+						<Panel>
+							<PanelHeader>
+								<PanelTitle>Your business</PanelTitle>
+							</PanelHeader>
+							<PanelBody className="grid grid-cols-2 gap-x-4 gap-y-5">
+								<TextField<ProfileValues>
+									name="name"
+									label="Business name"
+									placeholder="Dawn Studio"
+									className="col-span-2"
+									autoFocus={!profile}
+								/>
+								<TextField<ProfileValues>
+									name="legalName"
+									label="Legal name"
+									description="If it differs, e.g. your registered company name."
+									className="col-span-2"
+								/>
+								<TextField<ProfileValues> name="email" label="Email" type="email" />
+								<TextField<ProfileValues> name="phone" label="Phone" type="tel" />
+								<TextField<ProfileValues>
+									name="website"
+									label="Website"
+									placeholder="dawn.studio"
+								/>
+								<TextField<ProfileValues>
+									name="taxId"
+									label="Tax or VAT number"
+									inputClassName="font-mono"
+								/>
+							</PanelBody>
+						</Panel>
+					</PageSection>
+				) : null}
 
 				{afterBusiness ? <PageSection>{afterBusiness}</PageSection> : null}
 
-				<PageSection>
-					<AddressPanel title="Address" />
-				</PageSection>
+				{sections.includes("address") ? (
+					<PageSection>
+						<AddressPanel title="Address" />
+					</PageSection>
+				) : null}
 
-				<PageSection>
-					<InvoicingPanel />
-				</PageSection>
+				{sections.includes("invoicing") ? (
+					<PageSection>
+						<InvoicingPanel />
+					</PageSection>
+				) : null}
 
 				<PageSection className="flex justify-end">
 					<Button type="submit" disabled={isSubmitting || (Boolean(profile) && !isDirty)}>

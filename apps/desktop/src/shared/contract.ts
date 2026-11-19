@@ -81,6 +81,24 @@ export interface BackupPreview {
 	drafts: number;
 }
 
+/** "system" follows the OS appearance. */
+export type Theme = "system" | "light" | "dark";
+
+/** Accent colour palettes (packages/ui palettes.css); lime is the brand default. */
+export const PALETTES = [
+	"lime",
+	"mint",
+	"teal",
+	"sky",
+	"indigo",
+	"violet",
+	"rose",
+	"coral",
+	"amber",
+	"mono",
+] as const;
+export type Palette = (typeof PALETTES)[number];
+
 export interface AppInfo {
 	name: string;
 	version: string;
@@ -103,6 +121,16 @@ const workspaceName = z.string().trim().min(1, "Name is required").max(60);
 
 export const contract = {
 	"app.info": { input: z.void(), output: returns<AppInfo>() },
+	"preferences.theme": { input: z.void(), output: returns<Theme>() },
+	"preferences.setTheme": {
+		input: z.object({ theme: z.enum(["system", "light", "dark"]) }),
+		output: returns<Theme>(),
+	},
+	"preferences.palette": { input: z.void(), output: returns<Palette>() },
+	"preferences.setPalette": {
+		input: z.object({ palette: z.enum(PALETTES) }),
+		output: returns<Palette>(),
+	},
 
 	"workspaces.list": { input: z.void(), output: returns<WorkspaceList>() },
 	/** Creates an empty workspace and opens it. */

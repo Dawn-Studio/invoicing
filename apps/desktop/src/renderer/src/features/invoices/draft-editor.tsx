@@ -32,6 +32,7 @@ import {
 } from "@dawnstudio/ui/components/select";
 import { Textarea } from "@dawnstudio/ui/components/textarea";
 import { cn } from "@dawnstudio/ui/lib/utils";
+import { useAppHotkeys, useHotkey } from "@tanstack/react-hotkeys";
 import { type ReactNode, useId, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -158,6 +159,18 @@ export function DraftEditor({ invoice }: { invoice: Invoice }) {
 
 	const set = (patch: Partial<DraftState>) => setState((current) => ({ ...current, ...patch }));
 	const defaultRate = taxRates.find((rate) => rate.isDefault) ?? null;
+	const addLine = () =>
+		setState((current) => ({ ...current, items: [...current.items, emptyLine(defaultRate)] }));
+
+	const hotkeys = useAppHotkeys();
+	useHotkey(hotkeys["editor.addLine"], addLine);
+	useHotkey(hotkeys["editor.save"], () => {
+		if (Object.keys(errors).length > 0) {
+			toast.error("Not saved yet", { description: "Fix the highlighted fields first." });
+			return;
+		}
+		flush().catch(() => undefined);
+	});
 	const terms = termDays(state);
 
 	return (
@@ -320,12 +333,7 @@ export function DraftEditor({ invoice }: { invoice: Invoice }) {
 							taxRates={taxRates}
 							errors={errors}
 							onChange={(items) => set({ items })}
-							onAdd={() =>
-								setState((current) => ({
-									...current,
-									items: [...current.items, emptyLine(defaultRate)],
-								}))
-							}
+							onAdd={addLine}
 							catalogPicker={<CatalogPicker currency={state.currency} onPick={addFromCatalog} />}
 							onSaveToCatalog={(line) => {
 								let unitPrice = 0;

@@ -34,6 +34,7 @@ import { Link, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import type { ReportExportKind } from "../../../../shared/contract";
 import { Page, PageSection } from "../../components/page";
+import { LoadError } from "../../components/states";
 import { formatAmount, formatIsoDate } from "../../lib/format";
 import { showSaveError } from "../../lib/forms";
 import { usePeriodReport } from "../../lib/queries";
@@ -87,7 +88,7 @@ export function ReportsPage() {
 	const period = (params.get("period") as Period | null) ?? "this-year";
 	const requested = params.get("currency") ?? undefined;
 	const range = periodRange(period, today);
-	const { data: report } = usePeriodReport({ ...range, currency: requested });
+	const { data: report, error, refetch } = usePeriodReport({ ...range, currency: requested });
 
 	const setParam = (key: string, value: string) =>
 		setParams(
@@ -140,7 +141,11 @@ export function ReportsPage() {
 				{formatIsoDate(range.from)} – {formatIsoDate(range.to)}
 			</PageSection>
 
-			{!report ? (
+			{error ? (
+				<PageSection>
+					<LoadError error={error} retry={() => void refetch()} />
+				</PageSection>
+			) : !report ? (
 				<PageSection className="grid grid-cols-2 gap-3 lg:grid-cols-4">
 					{[0, 1, 2, 3].map((i) => (
 						<Skeleton key={i} className="h-24 rounded-lg" />

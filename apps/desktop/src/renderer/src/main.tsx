@@ -7,11 +7,13 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 import { appHotkeys } from "./lib/hotkeys";
+import { applyPalette } from "./lib/palettes";
 import { router } from "./router";
 import "./styles.css";
 
 document.documentElement.dataset.platform = window.api.platform;
 document.documentElement.dataset.glass = String(window.api.glass);
+applyPalette(window.api.palette);
 syncThemeWithSystem();
 
 // Data is local, so there's no network to retry or refetch on focus.

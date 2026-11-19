@@ -17,6 +17,7 @@ import {
 	DropdownMenuTrigger,
 } from "@dawnstudio/ui/components/dropdown-menu";
 import { Spinner } from "@dawnstudio/ui/components/spinner";
+import { useAppHotkeys, useHotkey } from "@tanstack/react-hotkeys";
 import { Copy, Ellipsis, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -91,6 +92,15 @@ export function DraftActions({
 
 	const ready = problems.length === 0;
 
+	const hotkeys = useAppHotkeys();
+	const openIssue = async () => {
+		if (await saveFirst()) setDialog("issue");
+	};
+	useHotkey(hotkeys["editor.issue"], () => void openIssue(), { enabled: dialog === null });
+	useHotkey(hotkeys["invoice.duplicate"], () => void onDuplicate(), {
+		enabled: dialog === null && !duplicate.isPending,
+	});
+
 	return (
 		<>
 			<DropdownMenu>
@@ -110,12 +120,7 @@ export function DraftActions({
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
-			<Button
-				size="sm"
-				onClick={async () => {
-					if (await saveFirst()) setDialog("issue");
-				}}
-			>
+			<Button size="sm" onClick={() => void openIssue()}>
 				Issue invoice
 			</Button>
 

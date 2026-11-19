@@ -7,6 +7,7 @@ import { defineAppHotkeys } from "@tanstack/react-hotkeys";
  */
 export const appHotkeys = defineAppHotkeys({
 	"invoice.new": { hotkey: "C", meta: { name: "New invoice", group: "General" } },
+	"palette.open": { hotkey: "Mod+K", meta: { name: "Command palette", group: "General" } },
 	"help.shortcuts": { hotkey: "?", meta: { name: "Keyboard shortcuts", group: "General" } },
 	"nav.dashboard": { hotkey: ["G", "D"], meta: { name: "Go to Dashboard", group: "Navigation" } },
 	"nav.invoices": { hotkey: ["G", "I"], meta: { name: "Go to Invoices", group: "Navigation" } },
@@ -14,6 +15,7 @@ export const appHotkeys = defineAppHotkeys({
 	"nav.items": { hotkey: ["G", "T"], meta: { name: "Go to Items", group: "Navigation" } },
 	"nav.reports": { hotkey: ["G", "R"], meta: { name: "Go to Reports", group: "Navigation" } },
 	"nav.settings": { hotkey: "Mod+,", meta: { name: "Settings", group: "Navigation" } },
+	"settings.close": { hotkey: "Escape", meta: { name: "Leave settings", group: "Navigation" } },
 	"list.next": { hotkey: "J", meta: { name: "Next invoice", group: "Invoice list" } },
 	"list.prev": { hotkey: "K", meta: { name: "Previous invoice", group: "Invoice list" } },
 	"list.nextArrow": { hotkey: "ArrowDown", meta: { name: "Next invoice", group: "Invoice list" } },
@@ -28,6 +30,14 @@ export const appHotkeys = defineAppHotkeys({
 	"list.search": { hotkey: "/", meta: { name: "Search", group: "Invoice list" } },
 	"list.markPaid": { hotkey: "P", meta: { name: "Mark paid today", group: "Invoice list" } },
 	"list.export": { hotkey: "E", meta: { name: "Export PDFs", group: "Invoice list" } },
+	"editor.save": { hotkey: "Mod+S", meta: { name: "Save now", group: "Invoice" } },
+	"editor.addLine": { hotkey: "Mod+L", meta: { name: "Add a line", group: "Invoice" } },
+	"editor.issue": { hotkey: "Mod+Enter", meta: { name: "Issue draft", group: "Invoice" } },
+	"invoice.payment": { hotkey: "P", meta: { name: "Record payment", group: "Invoice" } },
+	"invoice.send": { hotkey: "S", meta: { name: "Send", group: "Invoice" } },
+	"invoice.print": { hotkey: "Mod+P", meta: { name: "Print", group: "Invoice" } },
+	"invoice.exportPdf": { hotkey: "Mod+E", meta: { name: "Export PDF", group: "Invoice" } },
+	"invoice.duplicate": { hotkey: "Mod+D", meta: { name: "Duplicate", group: "Invoice" } },
 });
 
 declare module "@tanstack/react-hotkeys" {

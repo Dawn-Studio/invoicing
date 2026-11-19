@@ -8,6 +8,7 @@
 @import "@fontsource-variable/geist-mono";
 @import "@fontsource-variable/source-serif-4";
 @import "./theme.css";
+@import "./palettes.css";
 
 /* Scan this package's components so consumers get their utility classes. */
 @source "../";
@@ -86,6 +87,8 @@
 html[data-glass="true"] body {
 	background: transparent;
 }
-html[data-glass="true"] {
+/* Specific enough to beat `.dark[data-palette]`, which sets an opaque --sidebar. */
+html[data-glass="true"],
+html.dark[data-glass="true"][data-palette] {
 	--sidebar: var(--glass-tint);
 }

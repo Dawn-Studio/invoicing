@@ -122,18 +122,20 @@ Local-first means the user's data must never be lost.
 - ✅ Migration safety: a snapshot before pending migrations run on existing data (a failed backup stops the upgrade); data from a newer app version is refused instead of opened
 - 🔮 Encrypted backups
 
-### E10 · App shell & experience 🟡
+### E10 · App shell & experience ✅
 
 A fast, keyboard-friendly, native-feeling desktop app.
 
 - ✅ Sidebar layout, light/dark following the OS
 - ✅ Redesign: own brand (lime #8FFF4A, Be Vietnam Pro, rounded buttons; the user rejected pill buttons) on a Linear-inspired layout; glass sidebar (macOS vibrancy, Windows 11 acrylic), blurred sticky header and overlays, inset content card, status icons, Lucide icons throughout, "New invoice" button in the sidebar
-- ⬜ Command palette (⌘K): jump to client/invoice, create new
-- 🟡 Keyboard shortcuts: app-wide set and `?` sheet done (see E7); editor shortcuts still to add
-- ⬜ Native menus (macOS app menu, Windows/Linux menu bar)
-- ⬜ Theme override (system / light / dark) in settings
-- ⬜ App icon and window polish (traffic lights, titlebar drag areas)
-- ⬜ Empty states, loading and error states across screens
+- ✅ Command palette (⌘K): searches invoices and clients, recent invoices, actions (new invoice/client, back up, restore, shortcuts), navigation, appearance, switching workspaces
+- ✅ Keyboard shortcuts: app-wide set and `?` sheet (see E7); invoice shortcuts: ⌘S save now, ⌘L add a line, ⌘↵ issue, ⌘D duplicate; on issued invoices P record payment, S send, ⌘P print, ⌘E export PDF
+- ✅ Native menus: macOS app menu (About, Settings ⌘,), File (New Invoice ⌘N, New Client ⇧⌘N, backups, data folder), Edit, View (Command Palette ⌘K, Appearance, zoom, full screen), Go (⌘1–5), Window, Help (Keyboard Shortcuts ⌘/); a menu bar on Windows/Linux. Menu items send commands to the window
+- ✅ Settings as their own area, Linear-style: the sidebar switches to settings sections (workspace: General, Business, Invoices, Invoice design, Payment accounts, Tax rates, Email; app: Appearance, Keyboard shortcuts, Data & backups), one page each at `/settings/:section`; "‹ Settings" or Esc goes back to where you were
+- ✅ Ten colour palettes (Lime default, Mint, Teal, Sky, Indigo, Violet, Rose, Coral, Amber, Mono): accent plus neutrals tinted to match, in light and dark (`packages/ui/src/styles/palettes.css`); saved per computer and applied before first paint; also in ⌘K
+- ✅ Theme override (match system / light / dark) in Settings → Appearance, the View menu and the palette; saved per computer in `preferences.json` and applied natively (`nativeTheme.themeSource`), so vibrancy and the page follow it
+- ✅ App icon (`build/icon.svg` → `icon.png`, also the Dock icon in development); the window remembers its size, position and maximized state
+- ✅ Empty, loading and error states: first-run dashboard checklist, not-found screens for invoices and clients, "couldn't load" with retry on the dashboard, reports and app start, a crash screen per route that keeps the sidebar
 
 ### E11 · Distribution & updates 🟡
 

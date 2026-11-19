@@ -94,3 +94,8 @@ export const useDashboardReport = (currency?: string) =>
 	useRpcQuery("reports.dashboard", currency ? { currency } : undefined, { staleTime: 0 });
 export const usePeriodReport = (input: Input<"reports.period">) =>
 	useRpcQuery("reports.period", input, { staleTime: 0 });
+
+export const useTheme = () => useRpcQuery("preferences.theme");
+export const useSetTheme = () => useRpcMutation("preferences.setTheme", ["preferences"]);
+export const usePalette = () => useRpcQuery("preferences.palette");
+export const useSetPalette = () => useRpcMutation("preferences.setPalette", ["preferences"]);

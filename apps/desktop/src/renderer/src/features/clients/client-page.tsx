@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import { CurrencyField, NumberField, TextareaField, TextField } from "../../components/form/fields";
 import { Page, PageSection } from "../../components/page";
+import { LoadError, NotFound } from "../../components/states";
 import { formatTimestamp } from "../../lib/format";
 import { showSaveError } from "../../lib/forms";
 import {
@@ -28,6 +29,7 @@ import {
 	useUnarchiveClient,
 	useUpdateClient,
 } from "../../lib/queries";
+import { RpcError } from "../../lib/rpc";
 import { useStartInvoice } from "../invoices/use-start-invoice";
 import { AddressPanel } from "../profile/profile-form";
 import { ClientInvoicesPanel, ClientOverviewPanel } from "./client-overview";
@@ -56,7 +58,7 @@ function toFormValues(client: Client): Values {
 /** Create (`/clients/new`) or edit (`/clients/:id`) a client. */
 export function ClientPage() {
 	const { id } = useParams();
-	const { data: client, isPending, error } = useClient(id);
+	const { data: client, isPending, error, refetch } = useClient(id);
 
 	if (id && isPending)
 		return (
@@ -68,10 +70,15 @@ export function ClientPage() {
 		return (
 			<Page title="Client" back={{ to: "/clients", label: "Clients" }}>
 				<PageSection>
-					<Alert>
-						<AlertTitle>Client not found</AlertTitle>
-						<AlertDescription>It may have been removed.</AlertDescription>
-					</Alert>
+					{error instanceof RpcError && error.code !== "NOT_FOUND" ? (
+						<LoadError error={error} retry={() => void refetch()} />
+					) : (
+						<NotFound
+							title="Client not found"
+							description="It may have been removed, or the link is out of date."
+							back={{ to: "/clients", label: "All clients" }}
+						/>
+					)}
 				</PageSection>
 			</Page>
 		);

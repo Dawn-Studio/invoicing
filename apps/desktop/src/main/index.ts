@@ -1,8 +1,20 @@
 import { release } from "node:os";
 import { join } from "node:path";
-import { app, BrowserWindow, dialog, nativeTheme, shell } from "electron";
+import {
+	app,
+	BrowserWindow,
+	dialog,
+	ipcMain,
+	nativeImage,
+	nativeTheme,
+	screen,
+	shell,
+} from "electron";
+import { PALETTE_CHANNEL } from "../shared/api";
 import { discardAllStaged } from "./backups";
 import { createHandlers } from "./handlers";
+import { installMenu } from "./menu";
+import { getPalette, getTheme, getWindowBounds, saveWindowBounds, setTheme } from "./preferences";
 import { registerRpc } from "./rpc";
 import { WorkspaceManager } from "./workspaces";
 
@@ -29,10 +41,49 @@ const glassOptions = (): Electron.BrowserWindowConstructorOptions =>
 			? { vibrancy: "sidebar", visualEffectState: "followWindow", backgroundColor: "#00000000" }
 			: { backgroundMaterial: "acrylic", backgroundColor: "#00000000" };
 
+let mainWindow: BrowserWindow | null = null;
+
+/** The saved window position, if it still fits on a connected display. */
+function restoredBounds() {
+	const saved = getWindowBounds();
+	if (!saved) return null;
+	const visible = screen.getAllDisplays().some(({ workArea: area }) => {
+		const overlapX =
+			Math.min(saved.x + saved.width, area.x + area.width) - Math.max(saved.x, area.x);
+		const overlapY =
+			Math.min(saved.y + saved.height, area.y + area.height) - Math.max(saved.y, area.y);
+		return overlapX >= 100 && overlapY >= 50;
+	});
+	return visible ? saved : null;
+}
+
+/** Remembers where the window was, so the next launch opens it there. */
+function trackBounds(window: BrowserWindow) {
+	let timer: NodeJS.Timeout | undefined;
+	const save = () => {
+		if (window.isDestroyed() || window.isMinimized() || window.isFullScreen()) return;
+		const maximized = window.isMaximized();
+		const bounds = maximized ? window.getNormalBounds() : window.getBounds();
+		saveWindowBounds({ ...bounds, maximized });
+	};
+	const later = () => {
+		clearTimeout(timer);
+		timer = setTimeout(save, 500);
+	};
+	window.on("resize", later);
+	window.on("move", later);
+	window.on("close", () => {
+		clearTimeout(timer);
+		save();
+	});
+}
+
 function createWindow() {
+	const bounds = restoredBounds();
 	const window = new BrowserWindow({
-		width: 1280,
-		height: 820,
+		width: bounds?.width ?? 1280,
+		height: bounds?.height ?? 820,
+		...(bounds ? { x: bounds.x, y: bounds.y } : {}),
 		minWidth: 960,
 		minHeight: 600,
 		show: false,
@@ -49,7 +100,15 @@ function createWindow() {
 		},
 	});
 
-	window.once("ready-to-show", () => window.show());
+	mainWindow = window;
+	window.on("closed", () => {
+		if (mainWindow === window) mainWindow = null;
+	});
+	trackBounds(window);
+	window.once("ready-to-show", () => {
+		if (bounds?.maximized) window.maximize();
+		window.show();
+	});
 
 	// Links with target=_blank open in the default browser; the app never opens new windows itself.
 	window.webContents.setWindowOpenHandler(({ url }) => {
@@ -72,6 +131,16 @@ function createWindow() {
 
 app.whenReady().then(() => {
 	app.setAppUserModelId("com.dawnstudio.invoicing");
+	// Before the first window, so it opens in the chosen appearance and palette.
+	setTheme(getTheme());
+	ipcMain.on(PALETTE_CHANNEL, (event) => {
+		event.returnValue = getPalette();
+	});
+	// The packaged app gets its icon from the bundle; in development, show it in the Dock too.
+	if (isMac && !app.isPackaged) {
+		const icon = nativeImage.createFromPath(join(__dirname, "../../build/icon.png"));
+		if (!icon.isEmpty()) app.dock?.setIcon(icon);
+	}
 
 	let workspaces: WorkspaceManager;
 	try {
@@ -89,8 +158,14 @@ app.whenReady().then(() => {
 		workspaces.close();
 	});
 
-	registerRpc(createHandlers(workspaces));
+	const refreshMenu = installMenu({ window: () => mainWindow, openWindow: createWindow });
+	registerRpc(createHandlers(workspaces, { onThemeChanged: refreshMenu }));
 	createWindow();
+
+	// Opaque windows paint their own background; keep it in step with the theme.
+	nativeTheme.on("updated", () => {
+		if (!glass) mainWindow?.setBackgroundColor(backgroundColor());
+	});
 
 	// A daily backup: checked shortly after launch (not delaying the window) and every hour
 	// for an app left open for days.

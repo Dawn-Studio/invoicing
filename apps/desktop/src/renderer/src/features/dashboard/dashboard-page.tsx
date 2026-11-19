@@ -9,12 +9,22 @@ import {
 	PanelTitle,
 } from "@dawnstudio/ui/components/panel";
 import { Skeleton } from "@dawnstudio/ui/components/skeleton";
-import { ArrowRight, Circle, CircleAlert, CircleCheck, Wallet } from "lucide-react";
+import {
+	ArrowRight,
+	Circle,
+	CircleAlert,
+	CircleCheck,
+	Sparkles,
+	SquarePen,
+	Wallet,
+} from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { Page, PageSection } from "../../components/page";
+import { LoadError } from "../../components/states";
 import { formatAmount } from "../../lib/format";
-import { useDashboardReport } from "../../lib/queries";
+import { useClients, useDashboardReport, usePaymentAccounts } from "../../lib/queries";
 import { dueText } from "../invoices/invoice-row";
+import { useStartInvoice } from "../invoices/use-start-invoice";
 import { CurrencyMenu, MonthlyChart, StatTile } from "../reports/report-parts";
 
 const plural = (count: number, one: string, many = `${one}s`) =>
@@ -24,7 +34,7 @@ const plural = (count: number, one: string, many = `${one}s`) =>
 export function DashboardPage() {
 	const [params, setParams] = useSearchParams();
 	const requested = params.get("currency") ?? undefined;
-	const { data: report } = useDashboardReport(requested);
+	const { data: report, error, refetch } = useDashboardReport(requested);
 	const today = todayIso();
 	const year = today.slice(0, 4);
 
@@ -52,11 +62,19 @@ export function DashboardPage() {
 				) : null
 			}
 		>
-			{!report ? (
+			{error ? (
+				<PageSection>
+					<LoadError error={error} retry={() => void refetch()} />
+				</PageSection>
+			) : !report ? (
 				<PageSection className="grid grid-cols-2 gap-3 lg:grid-cols-4">
 					{[0, 1, 2, 3].map((i) => (
 						<Skeleton key={i} className="h-24 rounded-lg" />
 					))}
+				</PageSection>
+			) : report.currencies.length === 0 && report.draftCount === 0 ? (
+				<PageSection>
+					<GettingStarted />
 				</PageSection>
 			) : (
 				<>
@@ -164,5 +182,56 @@ export function DashboardPage() {
 				</>
 			)}
 		</Page>
+	);
+}
+
+/** Before the first invoice: the few steps to get there, ticked off as they're done. */
+function GettingStarted() {
+	const { data: clients = [] } = useClients();
+	const { data: accounts = [] } = usePaymentAccounts();
+	const start = useStartInvoice();
+	const steps = [
+		{ label: "Set up your business", done: true, to: "/settings/business" },
+		{ label: "Add a payment account", done: accounts.length > 0, to: "/settings/payments" },
+		{ label: "Add your first client", done: clients.length > 0, to: "/clients/new" },
+	];
+	return (
+		<Panel>
+			<PanelBody className="flex flex-col items-center gap-6 py-12 text-center">
+				<span className="flex size-10 items-center justify-center rounded-lg bg-primary/15 text-brand-ink">
+					<Sparkles className="size-5" />
+				</span>
+				<div className="flex max-w-sm flex-col gap-2">
+					<h2 className="text-lg font-medium tracking-tight">Ready for your first invoice</h2>
+					<p className="text-sm/relaxed text-balance text-muted-foreground">
+						Once you issue invoices, what you're owed, what's late and what came in each month shows
+						up here.
+					</p>
+				</div>
+				<ul className="flex w-full max-w-xs flex-col gap-1 text-left">
+					{steps.map((step) => (
+						<li key={step.label}>
+							<Link
+								to={step.to}
+								className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[0.9375rem] transition-colors hover:bg-accent/60"
+							>
+								{step.done ? (
+									<CircleCheck className="size-4 text-success" />
+								) : (
+									<Circle className="size-4 text-muted-foreground" />
+								)}
+								<span className={step.done ? "text-muted-foreground line-through" : undefined}>
+									{step.label}
+								</span>
+							</Link>
+						</li>
+					))}
+				</ul>
+				<Button disabled={start.isPending} onClick={() => void start.run()}>
+					<SquarePen />
+					Create an invoice
+				</Button>
+			</PanelBody>
+		</Panel>
 	);
 }

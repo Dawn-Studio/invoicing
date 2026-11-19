@@ -18,6 +18,7 @@ import {
 } from "@dawnstudio/ui/components/dropdown-menu";
 import { Spinner } from "@dawnstudio/ui/components/spinner";
 import { Textarea } from "@dawnstudio/ui/components/textarea";
+import { useAppHotkeys, useHotkey } from "@tanstack/react-hotkeys";
 import { useQueryClient } from "@tanstack/react-query";
 import {
 	Ban,
@@ -114,6 +115,18 @@ export function IssuedActions({ invoice }: { invoice: Invoice }) {
 			showSaveError(error);
 		}
 	};
+
+	const hotkeys = useAppHotkeys();
+	const idle = dialog === null;
+	useHotkey(hotkeys["invoice.payment"], () => setDialog("payment"), { enabled: open && idle });
+	useHotkey(hotkeys["invoice.send"], () => setDialog("send"), {
+		enabled: invoice.status !== "void" && idle,
+	});
+	useHotkey(hotkeys["invoice.print"], onPrint, { enabled: idle });
+	useHotkey(hotkeys["invoice.exportPdf"], () => void onExport(), { enabled: idle && !exporting });
+	useHotkey(hotkeys["invoice.duplicate"], () => void onDuplicate(), {
+		enabled: idle && !duplicate.isPending,
+	});
 
 	return (
 		<>
