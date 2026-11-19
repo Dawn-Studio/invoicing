@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseClientsCsv } from "./client-import";
-import { detectDelimiter, parseCsv } from "./csv";
+import { detectDelimiter, parseCsv, toCsv } from "./csv";
 
 describe("parseCsv", () => {
 	it("reads quoted fields, escaped quotes and newlines inside quotes", () => {
@@ -87,5 +87,20 @@ describe("parseClientsCsv", () => {
 
 	it("reports a file without rows", () => {
 		expect(parseClientsCsv("name,email\n").error).toMatch(/no client rows/);
+	});
+});
+
+describe("toCsv", () => {
+	it("quotes, escapes and guards formulas", () => {
+		const text = toCsv([
+			["Name", "Amount"],
+			['Acme, "Inc"', -12.5],
+			["=SUM(A1)", "-3.00"],
+			["line\nbreak", null],
+		]);
+		expect(text).toBe(
+			'﻿Name,Amount\r\n"Acme, ""Inc""",-12.5\r\n\'=SUM(A1),-3.00\r\n"line\nbreak",\r\n',
+		);
+		expect(parseCsv(text.slice(1))[1]).toEqual(['Acme, "Inc"', "-12.5"]);
 	});
 });

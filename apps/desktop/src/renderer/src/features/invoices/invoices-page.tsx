@@ -158,6 +158,7 @@ export function InvoicesPage() {
 			await Promise.all([
 				queryClient.invalidateQueries({ queryKey: ["invoices"] }),
 				queryClient.invalidateQueries({ queryKey: ["clients"] }),
+				queryClient.invalidateQueries({ queryKey: ["reports"] }),
 			]);
 			toast.success(`Marked ${result.paid} ${result.paid === 1 ? "invoice" : "invoices"} paid`);
 			setSelected(new Set());

@@ -12,6 +12,7 @@ export const appHotkeys = defineAppHotkeys({
 	"nav.invoices": { hotkey: ["G", "I"], meta: { name: "Go to Invoices", group: "Navigation" } },
 	"nav.clients": { hotkey: ["G", "C"], meta: { name: "Go to Clients", group: "Navigation" } },
 	"nav.items": { hotkey: ["G", "T"], meta: { name: "Go to Items", group: "Navigation" } },
+	"nav.reports": { hotkey: ["G", "R"], meta: { name: "Go to Reports", group: "Navigation" } },
 	"nav.settings": { hotkey: "Mod+,", meta: { name: "Settings", group: "Navigation" } },
 	"list.next": { hotkey: "J", meta: { name: "Next invoice", group: "Invoice list" } },
 	"list.prev": { hotkey: "K", meta: { name: "Previous invoice", group: "Invoice list" } },

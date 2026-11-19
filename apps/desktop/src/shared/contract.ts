@@ -7,6 +7,7 @@ import {
 	type ClientStats,
 	catalogItemInputSchema,
 	clientInputSchema,
+	type DashboardReport,
 	type DomainErrorCode,
 	type EmailTemplates,
 	INVOICE_STATUSES,
@@ -18,6 +19,7 @@ import {
 	isoDateSchema,
 	type Payment,
 	type PaymentAccount,
+	type PeriodReport,
 	paymentAccountInputSchema,
 	paymentInputSchema,
 	profileInputSchema,
@@ -49,6 +51,9 @@ export interface ExportSettings {
 	/** Folder the save dialog opens in. */
 	folder: string;
 }
+
+export const REPORT_EXPORT_KINDS = ["invoices", "payments", "items", "pdfs"] as const;
+export type ReportExportKind = (typeof REPORT_EXPORT_KINDS)[number];
 
 export interface AppInfo {
 	name: string;
@@ -246,6 +251,25 @@ export const contract = {
 	"exportSettings.chooseFolder": { input: z.void(), output: returns<ExportSettings | null>() },
 	/** Shows an exported file in Finder / Explorer. */
 	"files.reveal": { input: z.object({ path: z.string().max(4096) }), output: returns<void>() },
+	/** Dashboard figures in one currency (the most used one when not given). */
+	"reports.dashboard": {
+		input: z.object({ currency: z.string().length(3).optional() }).optional(),
+		output: returns<DashboardReport>(),
+	},
+	/** Revenue per client and the tax summary for a period. */
+	"reports.period": {
+		input: z.object({
+			currency: z.string().length(3).optional(),
+			from: isoDateSchema,
+			to: isoDateSchema,
+		}),
+		output: returns<PeriodReport>(),
+	},
+	/** CSV of the period's invoices, payments or line items, or a zip of its PDFs; null when cancelled. */
+	"reports.export": {
+		input: z.object({ kind: z.enum(REPORT_EXPORT_KINDS), from: isoDateSchema, to: isoDateSchema }),
+		output: returns<{ path: string; count: number } | null>(),
+	},
 	"invoices.void": {
 		input: byId.extend({ reason: z.string().max(500).optional() }),
 		output: returns<Invoice>(),

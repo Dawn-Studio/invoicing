@@ -99,17 +99,18 @@ Find any invoice and know its state at a glance.
 - ✅ Status tabs with counts (All, Drafts, Open, Overdue, Paid, Void), filters for client, period (this/last month, quarter, year) and currency, search by number, client or line item text; filters live in the URL so Back keeps them
 - ✅ Overdue derived from due date, with "due in N days" / "N days overdue" labels
 - ✅ Bulk actions with a selection bar: mark paid today, export PDFs to a folder (drafts skipped, existing files never overwritten)
-- ✅ Keyboard (TanStack Hotkeys, `lib/hotkeys.ts`): J/K or arrows, Enter open, X select, ⌘A all, Esc clear, / search, P mark paid, E export; global C new invoice, G then D/I/C/T to navigate, ⌘, settings, ? shortcuts sheet
+- ✅ Keyboard (TanStack Hotkeys, `lib/hotkeys.ts`): J/K or arrows, Enter open, X select, ⌘A all, Esc clear, / search, P mark paid, E export; global C new invoice, G then D/I/C/T/R to navigate, ⌘, settings, ? shortcuts sheet
 
-### E8 · Dashboard & reports ⬜
+### E8 · Dashboard & reports ✅
 
 Know how the business is doing without a spreadsheet.
 
-- ⬜ Outstanding and overdue, per currency
-- ⬜ Paid this month / year, revenue per month chart
-- ⬜ Revenue per client
-- ⬜ Tax summary per rate for a period
-- ⬜ Export CSV (invoices, payments, line items) and a zip of PDFs for a period
+- ✅ Outstanding and overdue, per currency (currency switcher when there's more than one; amounts in different currencies are never added together)
+- ✅ Received this month / year, received per month chart (last 12 months, hover shows received and invoiced)
+- ✅ Revenue per client (Reports page: invoiced by issue date, received by payment date, still owed)
+- ✅ Tax summary per rate for a period, including untaxed sales
+- ✅ Export CSV (invoices, payments, line items) and a zip of PDFs for a period
+- 🔮 Custom date ranges (presets only for now: this/last month, quarter, year)
 
 ### E9 · Data safety & portability ⬜
 

@@ -499,3 +499,94 @@ describe("branding", () => {
 		});
 	});
 });
+
+describe("reports", () => {
+	const issueFor = (clientId: string, issueDate: string, dueDate: string, vat: string | null) => {
+		const draft = repos.invoices.createDraft({ clientId });
+		repos.invoices.updateDraft(draft.id, {
+			...draft,
+			issueDate,
+			dueDate,
+			items: [
+				{
+					description: "Design",
+					quantity: 10_000,
+					unitPrice: 8_000,
+					taxRateId: vat,
+					taxRate: vat ? 2000 : 0,
+				},
+				{ description: "Hosting", quantity: 1_000, unitPrice: 2_000 },
+			],
+		});
+		return repos.invoices.issue(draft.id);
+	};
+
+	it("adds up outstanding, overdue, received and invoiced per currency", () => {
+		repos.profile.save(profileInput);
+		const acme = repos.clients.create({ name: "Acme", currency: "USD" });
+		const globex = repos.clients.create({ name: "Globex", currency: "EUR" });
+		const vat = repos.taxRates.create({ name: "VAT", rate: 2000 });
+
+		const paid = issueFor(acme.id, "2026-09-10", "2026-09-24", vat.id); // 980.00
+		repos.invoices.recordPayment(paid.id, { amount: paid.total, date: "2026-10-02" });
+		const overdue = issueFor(acme.id, "2026-10-01", "2026-10-15", null); // 820.00
+		repos.invoices.recordPayment(overdue.id, { amount: 20_000, date: "2026-11-03" });
+		issueFor(acme.id, "2026-11-10", "2026-12-10", vat.id);
+		repos.invoices.void(issueFor(acme.id, "2026-11-11", "2026-12-11", null).id);
+		issueFor(globex.id, "2026-11-12", "2026-12-12", null);
+		repos.invoices.createDraft({ clientId: acme.id });
+
+		const usd = repos.reports.dashboard({ fallback: "EUR" });
+		expect(usd.currencies).toEqual(["USD", "EUR"]);
+		expect(usd).toMatchObject({
+			currency: "USD",
+			outstanding: { amount: 62_000 + 98_000, count: 2 },
+			overdue: { amount: 62_000, count: 1 },
+			receivedThisMonth: 20_000,
+			receivedThisYear: 118_000,
+			draftCount: 1,
+		});
+		expect(usd.overdueInvoices.map((i) => i.id)).toEqual([overdue.id]);
+		expect(usd.months).toHaveLength(12);
+		expect(usd.months.at(-1)).toEqual({ month: "2026-11", invoiced: 98_000, received: 20_000 });
+		expect(usd.months.at(-3)).toEqual({ month: "2026-09", invoiced: 98_000, received: 0 });
+
+		expect(repos.reports.dashboard({ currency: "EUR", fallback: "USD" }).outstanding).toEqual({
+			amount: 82_000,
+			count: 1,
+		});
+
+		const q4 = repos.reports.period({ fallback: "EUR", from: "2026-10-01", to: "2026-12-31" });
+		expect(q4).toMatchObject({
+			currency: "USD",
+			invoiced: { amount: 82_000 + 98_000, count: 2 },
+			received: { amount: 98_000 + 20_000, count: 2 },
+			taxTotal: 16_000,
+		});
+		// Received counts the September invoice's October payment; invoiced doesn't.
+		expect(q4.clients).toEqual([
+			{
+				clientId: acme.id,
+				name: "Acme",
+				invoiceCount: 2,
+				invoiced: 180_000,
+				received: 118_000,
+				outstanding: 160_000,
+			},
+		]);
+		expect(q4.taxes).toEqual([
+			{ rate: 2000, base: 80_000, amount: 16_000, invoiceCount: 1 },
+			{ rate: 0, base: 82_000 + 2_000, amount: 0, invoiceCount: 2 },
+		]);
+
+		const rows = repos.reports.invoicesForExport({ from: "2026-11-01", to: "2026-11-30" });
+		expect(rows.map((r) => [r.status, r.clientName, r.items.length])).toEqual([
+			["issued", "Acme", 2],
+			["void", "Acme", 2],
+			["issued", "Globex", 2],
+		]);
+		expect(repos.reports.paymentsForExport({ from: "2026-10-01", to: "2026-10-31" })).toEqual([
+			expect.objectContaining({ date: "2026-10-02", clientName: "Acme", amount: 98_000 }),
+		]);
+	});
+});

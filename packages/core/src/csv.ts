@@ -62,3 +62,17 @@ export function detectDelimiter(text: string): string {
 	}
 	return best;
 }
+
+/**
+ * Writes RFC 4180 CSV with CRLF line endings and a BOM so Excel reads UTF-8 correctly.
+ * Text that a spreadsheet would run as a formula (=, +, -, @ at the start) gets a leading
+ * apostrophe; plain numbers such as "-12.50" are left alone.
+ */
+export function toCsv(rows: readonly (readonly (string | number | null | undefined)[])[]): string {
+	const cell = (value: string | number | null | undefined) => {
+		let text = value === null || value === undefined ? "" : String(value);
+		if (/^[=+\-@\t\r]/.test(text) && !/^[-+]?\d+(\.\d+)?$/.test(text)) text = `'${text}`;
+		return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+	};
+	return `﻿${rows.map((row) => row.map(cell).join(",")).join("\r\n")}\r\n`;
+}

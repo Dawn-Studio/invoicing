@@ -146,3 +146,64 @@ export interface ClientImportResult {
 	/** Names that already existed (case-insensitive) or appeared twice in the import. */
 	skipped: string[];
 }
+
+/** Money in one currency, plus how many invoices it comes from. */
+export interface AmountCount {
+	amount: number;
+	count: number;
+}
+
+export interface MonthTotals {
+	/** "YYYY-MM" */
+	month: string;
+	/** Issued in that month (void excluded). */
+	invoiced: number;
+	/** Payments dated in that month. */
+	received: number;
+}
+
+/** Dashboard figures for one currency. */
+export interface DashboardReport {
+	currency: string;
+	/** Currencies with issued invoices, most used first; the switcher's options. */
+	currencies: string[];
+	outstanding: AmountCount;
+	overdue: AmountCount;
+	receivedThisMonth: number;
+	receivedThisYear: number;
+	/** The last 12 months, oldest first, including the current one. */
+	months: MonthTotals[];
+	/** Overdue invoices, longest overdue first. */
+	overdueInvoices: InvoiceSummary[];
+	draftCount: number;
+}
+
+export interface ClientRevenue {
+	clientId: string | null;
+	name: string;
+	invoiceCount: number;
+	invoiced: number;
+	received: number;
+	outstanding: number;
+}
+
+export interface TaxSummaryRow {
+	/** Basis points. */
+	rate: number;
+	base: number;
+	amount: number;
+	invoiceCount: number;
+}
+
+/** A period's figures for one currency (issue dates for invoiced, payment dates for received). */
+export interface PeriodReport {
+	currency: string;
+	currencies: string[];
+	from: string;
+	to: string;
+	invoiced: AmountCount;
+	received: AmountCount;
+	taxTotal: number;
+	clients: ClientRevenue[];
+	taxes: TaxSummaryRow[];
+}

@@ -7,6 +7,7 @@ import { DashboardPage } from "./features/dashboard/dashboard-page";
 import { InvoicePage } from "./features/invoices/invoice-page";
 import { InvoicesPage } from "./features/invoices/invoices-page";
 import { PrintPage } from "./features/invoices/print-page";
+import { ReportsPage } from "./features/reports/reports-page";
 import { SettingsPage } from "./features/settings/settings-page";
 import { WelcomePage } from "./features/welcome/welcome-page";
 
@@ -24,6 +25,7 @@ export const router = createHashRouter([
 			{ path: "clients/new", element: <ClientPage /> },
 			{ path: "clients/:id", element: <ClientPage /> },
 			{ path: "items", element: <ItemsPage /> },
+			{ path: "reports", element: <ReportsPage /> },
 			{ path: "settings", element: <SettingsPage /> },
 		],
 	},

@@ -14,6 +14,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@dawnstudio/ui/components/tooltip";
 import { useAppHotkeys } from "@tanstack/react-hotkeys";
 import {
+	ChartColumn,
 	FileText,
 	LayoutDashboard,
 	type LucideIcon,
@@ -33,7 +34,10 @@ interface NavEntry {
 	icon: LucideIcon;
 }
 
-const overview: NavEntry[] = [{ to: "/", label: "Dashboard", icon: LayoutDashboard }];
+const overview: NavEntry[] = [
+	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
+	{ to: "/reports", label: "Reports", icon: ChartColumn },
+];
 const billing: NavEntry[] = [
 	{ to: "/invoices", label: "Invoices", icon: FileText },
 	{ to: "/clients", label: "Clients", icon: Users },

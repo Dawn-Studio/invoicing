@@ -9,7 +9,7 @@ import { rpc } from "./rpc";
 export function useRpcQuery<C extends Channel>(
 	channel: C,
 	input?: Input<C>,
-	options: { enabled?: boolean } = {},
+	options: { enabled?: boolean; staleTime?: number } = {},
 ) {
 	return useQuery({
 		queryKey: [...channel.split("."), input ?? null] as QueryKey,
@@ -76,7 +76,7 @@ export const useArchiveTaxRate = () => useRpcMutation("taxRates.archive", ["taxR
 export const useWorkspaces = () => useRpcQuery("workspaces.list");
 export const useRenameWorkspace = () => useRpcMutation("workspaces.rename", ["workspaces"]);
 
-const invoiceKeys = ["invoices", "clients"];
+const invoiceKeys = ["invoices", "clients", "reports"];
 export const usePayments = (id: string) => useRpcQuery("invoices.payments", { id });
 export const useRecordPayment = () => useRpcMutation("invoices.recordPayment", invoiceKeys);
 export const useRemovePayment = () => useRpcMutation("invoices.removePayment", invoiceKeys);
@@ -88,3 +88,9 @@ export const useCreateCatalogItem = () => useRpcMutation("catalog.create", ["cat
 export const useUpdateCatalogItem = () => useRpcMutation("catalog.update", ["catalog"]);
 export const useArchiveCatalogItem = () => useRpcMutation("catalog.archive", ["catalog"]);
 export const useUnarchiveCatalogItem = () => useRpcMutation("catalog.unarchive", ["catalog"]);
+
+/** Reports are cheap to compute and change with almost any write, so they refetch on mount. */
+export const useDashboardReport = (currency?: string) =>
+	useRpcQuery("reports.dashboard", currency ? { currency } : undefined, { staleTime: 0 });
+export const usePeriodReport = (input: Input<"reports.period">) =>
+	useRpcQuery("reports.period", input, { staleTime: 0 });

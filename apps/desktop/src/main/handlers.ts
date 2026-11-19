@@ -10,12 +10,15 @@ import {
 	revealExported,
 	saveExportSettings,
 } from "./pdf";
+import { exportReport } from "./reports";
 import type { Handlers } from "./rpc";
 import type { WorkspaceManager } from "./workspaces";
 
 export function createHandlers(workspaces: WorkspaceManager): Handlers {
 	// Always the open workspace's repositories; switching workspaces replaces them.
 	const repos = () => workspaces.repos;
+	/** Reports open in the profile's currency until there are invoices to pick from. */
+	const fallbackCurrency = () => repos().profile.get()?.defaultCurrency ?? "USD";
 	return {
 		"app.info": () => ({
 			name: app.getName(),
@@ -97,6 +100,10 @@ export function createHandlers(workspaces: WorkspaceManager): Handlers {
 		"exportSettings.save": ({ pattern }) => saveExportSettings(repos(), { pattern }),
 		"exportSettings.chooseFolder": () => chooseExportFolder(repos()),
 		"files.reveal": ({ path }) => revealExported(path),
+		"reports.dashboard": (input) =>
+			repos().reports.dashboard({ currency: input?.currency, fallback: fallbackCurrency() }),
+		"reports.period": (input) => repos().reports.period({ ...input, fallback: fallbackCurrency() }),
+		"reports.export": (input) => exportReport(repos(), input),
 		"invoices.void": ({ id, reason }) => repos().invoices.void(id, reason),
 	};
 }

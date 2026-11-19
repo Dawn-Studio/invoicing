@@ -24,6 +24,7 @@ export function GlobalHotkeys() {
 	useHotkey(hotkeys["nav.invoices"], () => navigate("/invoices"));
 	useHotkey(hotkeys["nav.clients"], () => navigate("/clients"));
 	useHotkey(hotkeys["nav.items"], () => navigate("/items"));
+	useHotkey(hotkeys["nav.reports"], () => navigate("/reports"));
 	useHotkey(hotkeys["nav.settings"], () => navigate("/settings"));
 
 	return <ShortcutsSheet open={sheetOpen} onOpenChange={setSheetOpen} />;

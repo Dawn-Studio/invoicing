@@ -52,6 +52,11 @@ export async function chooseExportFolder(repos: Repositories): Promise<ExportSet
 /** Paths this session wrote, the only ones the renderer may reveal in Finder. */
 const exported = new Set<string>();
 
+/** Lets the renderer reveal a file written by another export (CSV, zip). */
+export function markExported(path: string) {
+	exported.add(path);
+}
+
 export function revealExported(path: string) {
 	if (!exported.has(path)) throw new DomainError("NOT_FOUND", "That file wasn't exported here");
 	shell.showItemInFolder(path);
