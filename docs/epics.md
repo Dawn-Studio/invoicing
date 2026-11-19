@@ -137,23 +137,25 @@ A fast, keyboard-friendly, native-feeling desktop app.
 - ✅ App icon (`build/icon.svg` → `icon.png`, also the Dock icon in development); the window remembers its size, position and maximized state
 - ✅ Empty, loading and error states: first-run dashboard checklist, not-found screens for invoices and clients, "couldn't load" with retry on the dashboard, reports and app start, a crash screen per route that keeps the sidebar
 
-### E11 · Distribution & updates 🟡
+### E11 · Distribution & updates ✅
 
 Installable on macOS, Windows and Linux without an Apple Developer account.
 
-- ✅ Unsigned macOS `.dmg` (arm64)
-- ⬜ macOS x64 / universal build
-- ⬜ Windows NSIS build (unsigned) and Linux AppImage/deb
-- ⬜ Release pipeline: build on tag, publish to GitHub Releases
-- ⬜ Auto-update on Windows/Linux; "update available" link on macOS
+- ✅ Unsigned macOS `.dmg` + `.zip`, Apple silicon and Intel as separate builds (one Mac builds both: better-sqlite3's Node-API prebuilds need no rebuild, `npmRebuild: false`)
+- ✅ Windows NSIS installer (unsigned, x64) and Linux AppImage + `.deb` (x64); each package carries only its OS's SQLite binaries
+- ✅ Release pipeline (`.github/workflows/release.yml`): a `v*` tag checks the version, lints/tests, creates one draft release and uploads the macOS, Windows and Linux builds; publishing the draft releases it. Steps in `docs/releasing.md`
+- ✅ Updates via electron-updater from GitHub Releases: Windows and AppImage download in the background and install on restart; macOS (unsigned) and `.deb` show "update available" with a link to the release. Checked 15 s after launch and every 6 hours, or from _Check for Updates…_ (app/Help menu) and Settings → About; a toast and a sidebar notice when one is found. A git-ignored `dev-app-update.yml` turns it on in development
 - 🔮 Developer ID signing + notarization, macOS auto-update
 
-### E12 · Landing page ⬜
+### E12 · Landing page ✅
 
-- ⬜ Hero, feature sections with Motion, real screenshots
-- ⬜ Download page with per-platform links from GitHub Releases and first-launch instructions
-- ⬜ Domain, SEO, Open Graph images
-- ⬜ Changelog page
+Astro site in `apps/web`, sharing the app's design tokens and motion presets from `@dawnstudio/ui`. Settings (domain, GitHub repo) in `apps/web/src/site.ts`.
+
+- ✅ Dark, dawn.studio-style home page with live demos built on Motion: an invoice that writes, issues and gets paid in the hero; an invoice design playground (template, accent, font); an invoice list that changes status on its own; a hoverable revenue chart; a self-typing ⌘K; a palette picker that recolours the whole site with the app's ten palettes (remembered). Numbered sections, count-up stats, a currency marquee, a tour of real app screenshots, and a site-wide ⌘K menu. Reduced motion respected
+- ✅ Download page: reads the latest GitHub release in the browser, highlights the visitor's platform, lists every build with sizes, falls back to the releases page; first-launch steps for unsigned macOS/Windows builds and Linux
+- ✅ SEO: canonical URLs, Open Graph/Twitter cards (`public/og.png`), JSON-LD, sitemap, robots.txt, favicons; 404 page (noindex)
+- ✅ Changelog page from Markdown entries (`src/content/changelog`)
+- ⬜ Domain: `invoicing.dawn.studio` and `dawnstudio/invoicing` are placeholders until decided; hosting not set up
 
 ### E13 · Integrations 🔮
 

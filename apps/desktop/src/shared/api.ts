@@ -17,6 +17,7 @@ export const ROUTES = {
 	items: "/items",
 	reports: "/reports",
 	settings: "/settings",
+	about: "/settings/about",
 } as const;
 
 /** What the native menu (or main process) asks the window to do. */
@@ -30,7 +31,9 @@ export type AppCommand =
 	| { type: "backup.export" }
 	| { type: "backup.restore" }
 	/** The theme was changed from the menu; settings should show the new value. */
-	| { type: "theme.changed" };
+	| { type: "theme.changed" }
+	/** The update status changed (checking, found, downloaded…). */
+	| { type: "update.status" };
 
 /** What the preload script exposes on `window.api`. */
 export interface DesktopApi {

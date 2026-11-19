@@ -1,0 +1,76 @@
+---
+import { ArrowUpRight } from "lucide-react";
+import { SITE } from "../site";
+import Logo from "./logo.astro";
+
+const path = Astro.url.pathname.replace(/\.html$/, "");
+const links = [
+	{ href: "/#features", label: "Features" },
+	{ href: "/#tour", label: "Tour" },
+	{ href: "/download", label: "Download" },
+	{ href: "/changelog", label: "Changelog" },
+];
+---
+
+<header
+	class="sticky top-0 z-40 border-b border-transparent bg-background/60 backdrop-blur-2xl backdrop-saturate-[1.8] transition-colors [&.scrolled]:border-border"
+	data-header
+>
+	<div class="mx-auto grid h-14 max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-5">
+		<Logo />
+		<nav class="hidden items-center gap-0.5 text-sm md:flex" aria-label="Main">
+			{
+				links.map((link) => (
+					<a
+						href={link.href}
+						class:list={[
+							"rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+							path === link.href && "text-foreground",
+						]}
+					>
+						{link.label}
+					</a>
+				))
+			}
+		</nav>
+		<div class="col-start-3 flex items-center justify-end gap-2">
+			<button
+				type="button"
+				data-open-command
+				class="hidden h-8 items-center gap-2 rounded-md border px-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+				aria-label="Open the command menu"
+			>
+				<kbd class="font-sans">⌘K</kbd>
+			</button>
+			<a
+				href={`https://github.com/${SITE.repo}`}
+				class="hidden h-8 items-center rounded-md px-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground lg:inline-flex"
+				>GitHub</a
+			>
+			<a
+				href="/download"
+				class="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-[filter] hover:brightness-110 [&_svg]:size-3.5"
+			>
+				Download
+				<ArrowUpRight />
+			</a>
+		</div>
+	</div>
+	<nav class="flex items-center gap-1 overflow-x-auto px-3 pb-2 text-sm md:hidden" aria-label="Main">
+		{
+			links.map((link) => (
+				<a href={link.href} class="shrink-0 rounded-md px-2.5 py-1 text-muted-foreground hover:text-foreground">
+					{link.label}
+				</a>
+			))
+		}
+	</nav>
+</header>
+
+<script>
+	// A hairline under the header once the page scrolls under it.
+	const header = document.querySelector("[data-header]");
+	const update = () => header?.classList.toggle("scrolled", window.scrollY > 4);
+	update();
+	window.addEventListener("scroll", update, { passive: true });
+</script>

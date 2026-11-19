@@ -99,6 +99,20 @@ export const PALETTES = [
 ] as const;
 export type Palette = (typeof PALETTES)[number];
 
+/**
+ * Where the app is with updates. Windows and the Linux AppImage download and install updates
+ * themselves ("ready" → restart). The unsigned macOS app and the .deb can't replace
+ * themselves, so they get "available" with a link to the release to download.
+ */
+export type UpdateStatus =
+	| { state: "unsupported" }
+	| { state: "idle"; checkedAt: number | null }
+	| { state: "checking" }
+	| { state: "available"; version: string; url: string }
+	| { state: "downloading"; version: string; percent: number }
+	| { state: "ready"; version: string }
+	| { state: "error"; message: string };
+
 export interface AppInfo {
 	name: string;
 	version: string;
@@ -122,6 +136,10 @@ const workspaceName = z.string().trim().min(1, "Name is required").max(60);
 export const contract = {
 	"app.info": { input: z.void(), output: returns<AppInfo>() },
 	"preferences.theme": { input: z.void(), output: returns<Theme>() },
+	"updates.status": { input: z.void(), output: returns<UpdateStatus>() },
+	"updates.check": { input: z.void(), output: returns<UpdateStatus>() },
+	"updates.install": { input: z.void(), output: returns<void>() },
+	"updates.download": { input: z.void(), output: returns<void>() },
 	"preferences.setTheme": {
 		input: z.object({ theme: z.enum(["system", "light", "dark"]) }),
 		output: returns<Theme>(),

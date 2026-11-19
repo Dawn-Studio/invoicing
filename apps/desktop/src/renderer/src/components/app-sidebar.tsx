@@ -30,6 +30,7 @@ import { useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { useStartInvoice } from "../features/invoices/use-start-invoice";
 import { SETTINGS_SECTIONS, type SettingsGroup } from "../features/settings/sections";
+import { SidebarUpdateNotice } from "../features/updates/update-notice";
 import { WorkspaceAvatar } from "../features/workspaces/workspace-avatar";
 import { WorkspaceSwitcher } from "../features/workspaces/workspace-switcher";
 import { useWorkspaces } from "../lib/queries";
@@ -154,7 +155,8 @@ function MainNav() {
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
-			<SidebarFooter className="px-2 pb-2">
+			<SidebarFooter className="gap-0 px-2 pb-2">
+				<SidebarUpdateNotice />
 				<SidebarMenu>
 					<NavItem to="/settings" label="Settings" icon={Settings} />
 				</SidebarMenu>

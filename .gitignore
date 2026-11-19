@@ -9,3 +9,5 @@ out/
 .env.*
 !.env.example
 release/
+# Local update settings for trying updates in development (see docs/releasing.md).
+dev-app-update.yml

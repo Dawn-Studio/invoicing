@@ -22,11 +22,12 @@ import {
 import { getPalette, getTheme, setPalette, setTheme } from "./preferences";
 import { exportReport } from "./reports";
 import type { Handlers } from "./rpc";
+import type { Updates } from "./updates";
 import type { WorkspaceManager } from "./workspaces";
 
 export function createHandlers(
 	workspaces: WorkspaceManager,
-	{ onThemeChanged }: { onThemeChanged: () => void },
+	{ onThemeChanged, updates }: { onThemeChanged: () => void; updates: Updates },
 ): Handlers {
 	// Always the open workspace's repositories; switching workspaces replaces them.
 	const repos = () => workspaces.repos;
@@ -45,6 +46,10 @@ export function createHandlers(
 			onThemeChanged();
 			return theme;
 		},
+		"updates.status": () => updates.status,
+		"updates.check": () => updates.check(),
+		"updates.install": () => updates.install(),
+		"updates.download": () => updates.openDownload(),
 		"preferences.palette": () => getPalette(),
 		"preferences.setPalette": ({ palette }) => {
 			setPalette(palette);

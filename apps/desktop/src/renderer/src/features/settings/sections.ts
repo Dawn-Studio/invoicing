@@ -2,6 +2,7 @@ import {
 	Building2,
 	DatabaseBackup,
 	FileText,
+	Info,
 	Keyboard,
 	Landmark,
 	Layers,
@@ -92,6 +93,13 @@ export const SETTINGS_SECTIONS = [
 		label: "Data & backups",
 		description: "Where your data lives, automatic backups, and restoring from one.",
 		icon: DatabaseBackup,
+		group: "app",
+	},
+	{
+		id: "about",
+		label: "About",
+		description: "Version and updates.",
+		icon: Info,
 		group: "app",
 	},
 ] as const satisfies SettingsSection[];

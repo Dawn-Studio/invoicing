@@ -10,6 +10,7 @@ interface MenuOptions {
 	window: () => BrowserWindow | null;
 	/** Opens the main window when there is none. */
 	openWindow: () => void;
+	checkForUpdates: () => void;
 }
 
 /**
@@ -17,7 +18,7 @@ interface MenuOptions {
  * items ask the window to do what the matching button or shortcut there does. Call the
  * returned function to rebuild it (the Appearance checkmarks follow the saved theme).
  */
-export function installMenu({ window, openWindow }: MenuOptions) {
+export function installMenu({ window, openWindow, checkForUpdates }: MenuOptions) {
 	const send = (command: AppCommand) => {
 		const target = window();
 		if (!target) {
@@ -49,6 +50,14 @@ export function installMenu({ window, openWindow }: MenuOptions) {
 		},
 	});
 
+	const checkUpdates: MenuItemConstructorOptions = {
+		label: "Check for Updates…",
+		click: () => {
+			send({ type: "navigate", to: "about" });
+			checkForUpdates();
+		},
+	};
+
 	const settings: MenuItemConstructorOptions = {
 		label: isMac ? "Settings…" : "Settings",
 		accelerator: "CmdOrCtrl+,",
@@ -62,7 +71,11 @@ export function installMenu({ window, openWindow }: MenuOptions) {
 						{
 							label: app.name,
 							submenu: [
-								{ role: "about" },
+								{
+									label: `About ${app.name}`,
+									click: () => send({ type: "navigate", to: "about" }),
+								},
+								checkUpdates,
 								{ type: "separator" },
 								settings,
 								{ type: "separator" },
@@ -163,18 +176,17 @@ export function installMenu({ window, openWindow }: MenuOptions) {
 					},
 					...(isMac
 						? []
-						: ([{ type: "separator" }, { role: "about" }] satisfies MenuItemConstructorOptions[])),
+						: ([
+								{ type: "separator" },
+								checkUpdates,
+								{ label: "About Invoicing", click: () => send({ type: "navigate", to: "about" }) },
+							] satisfies MenuItemConstructorOptions[])),
 				],
 			},
 		];
 		Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 	};
 
-	app.setAboutPanelOptions({
-		applicationName: "Invoicing",
-		applicationVersion: app.getVersion(),
-		copyright: "© 2026 Dawn Studio",
-	});
 	build();
 	return build;
 }

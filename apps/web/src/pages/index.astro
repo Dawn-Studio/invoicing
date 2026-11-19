@@ -1,18 +1,292 @@
 ---
+import { getImage } from "astro:assets";
+import { getCollection } from "astro:content";
+import type { ImageMetadata } from "astro";
+import { ArrowUpRight, Download } from "lucide-react";
+import { CommandDemo } from "../components/demos/command-demo";
+import { DesignPlayground } from "../components/demos/design-playground";
+import { PalettePicker } from "../components/demos/palette-picker";
+import { RevenueChart } from "../components/demos/revenue-chart";
+import { CheckItem } from "../components/demos/shared";
+import { Stats } from "../components/demos/stats";
+import { StatusBoard } from "../components/demos/status-board";
+import { Tour, type TourShot } from "../components/demos/tour";
 import { Hero } from "../components/hero";
+import { Reveal } from "../components/reveal";
+import SectionHeading from "../components/section-heading.astro";
 import BaseLayout from "../layouts/base-layout.astro";
+import { SITE } from "../site";
+
+const [latest] = (await getCollection("changelog")).sort((a, b) =>
+	b.data.version.localeCompare(a.data.version, undefined, { numeric: true }),
+);
+
+// Real screenshots (dark, like the site), optimised to WebP for the tour.
+const files = import.meta.glob<{ default: ImageMetadata }>("../assets/screenshots/*-dark.png", {
+	eager: true,
+});
+const tourShots = [
+	{
+		id: "dashboard",
+		label: "Dashboard",
+		caption: "What's owed, what's late and what came in, per currency.",
+	},
+	{
+		id: "invoices",
+		label: "Invoices",
+		caption: "Every invoice and where it stands. J/K to move, X to select.",
+	},
+	{
+		id: "editor",
+		label: "Editor",
+		caption: "The form on the left, the printed page on the right, updating as you type.",
+	},
+	{
+		id: "reports",
+		label: "Reports",
+		caption: "Revenue by client, a tax summary, and exports for your accountant.",
+	},
+	{ id: "palette", label: "⌘K", caption: "Jump to any client or invoice, or run any command." },
+	{
+		id: "appearance",
+		label: "Settings",
+		caption: "Light or dark, ten palettes, and settings that are easy to find.",
+	},
+];
+const shots: TourShot[] = await Promise.all(
+	tourShots.map(async (shot) => {
+		const source = files[`../assets/screenshots/${shot.id}-dark.png`]?.default;
+		if (!source) throw new Error(`Missing screenshot ${shot.id}-dark.png`);
+		const image = await getImage({ src: source, widths: [960, 1600, 2546], format: "webp" });
+		return {
+			...shot,
+			src: image.src,
+			srcSet: image.srcSet.attribute,
+			width: source.width,
+			height: source.height,
+			alt: `Invoicing: ${shot.caption}`,
+		};
+	}),
+);
+
+const currencies = [
+	["EUR", "12,140.00"],
+	["USD", "8,200.00"],
+	["GBP", "3,450.00"],
+	["SEK", "48,000.00"],
+	["NOK", "52,500.00"],
+	["CHF", "6,900.00"],
+	["JPY", "980,000"],
+	["CAD", "7,125.00"],
+	["AUD", "9,300.00"],
+	["DKK", "41,250.00"],
+	["PLN", "18,600.00"],
+	["CZK", "152,000.00"],
+];
+
+const jsonLd = {
+	"@context": "https://schema.org",
+	"@type": "SoftwareApplication",
+	name: SITE.name,
+	applicationCategory: "BusinessApplication",
+	operatingSystem: "macOS, Windows, Linux",
+	description: SITE.description,
+	url: SITE.url,
+	downloadUrl: new URL("/download", SITE.url).href,
+	softwareVersion: latest?.data.version,
+	publisher: { "@type": "Organization", name: SITE.by },
+};
 ---
 
-<BaseLayout
-	title="Invoicing by Dawn Studio"
-	description="A local-first desktop app for creating, branding and storing invoices."
->
-	<header class="border-b">
-		<div class="mx-auto flex h-14 max-w-5xl items-center px-4">
-			<span class="text-sm font-semibold tracking-tight">Invoicing</span>
+<BaseLayout jsonLd={jsonLd}>
+	<Hero client:load version={latest?.data.version} />
+
+	<section class="mx-auto max-w-6xl px-5 pt-16">
+		<Stats client:visible />
+	</section>
+
+	<!-- Any currency, scrolling past. -->
+	<section class="relative mt-14 overflow-hidden border-y py-4 [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]" aria-label="Bill in any currency">
+		<div class="marquee flex w-max gap-3">
+			{
+				[...currencies, ...currencies].map(([code, amount], index) => (
+					<span
+						class="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-sm whitespace-nowrap tabular-nums"
+						aria-hidden={index >= currencies.length ? "true" : undefined}
+					>
+						<span class="font-mono text-xs text-brand-ink">{code}</span>
+						{amount}
+					</span>
+				))
+			}
 		</div>
-	</header>
-	<main>
-		<Hero client:load />
-	</main>
+	</section>
+
+	<div id="features" class="mx-auto flex max-w-6xl scroll-mt-20 flex-col gap-32 px-5 py-28 sm:gap-40">
+		<section class="flex flex-col gap-12">
+			<SectionHeading number="01" label="Design" title="Invoices that look designed. Because they are.">
+				Pick a template, your colour and a font, add your logo, and every invoice you send looks
+				like it came from your studio. Try it:
+			</SectionHeading>
+			<Reveal client:visible y={32}>
+				<DesignPlayground client:visible />
+			</Reveal>
+		</section>
+
+		<section class="grid items-center gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+			<div class="flex flex-col gap-8">
+				<SectionHeading number="02" label="Track" title="Know where every invoice stands">
+					Open, partly paid, paid or overdue, without a spreadsheet. Record a payment when the money
+					arrives and the rest updates itself.
+				</SectionHeading>
+				<ul class="flex flex-col gap-3">
+					<CheckItem>Overdue invoices stand out, everywhere</CheckItem>
+					<CheckItem>Part payments leave the rest open</CheckItem>
+					<CheckItem>Filter by client, period or currency; mark several paid at once</CheckItem>
+				</ul>
+			</div>
+			<Reveal client:visible delay={0.1} y={32}>
+				<StatusBoard client:visible />
+			</Reveal>
+		</section>
+
+		<section class="grid items-center gap-12 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+			<Reveal client:visible y={32} className="lg:order-1">
+				<RevenueChart client:visible />
+			</Reveal>
+			<div class="flex flex-col gap-8 lg:order-2">
+				<SectionHeading number="03" label="Understand" title="See how the year is going">
+					A dashboard with what's owed and what came in each month, and reports by client and tax
+					rate for any period. Hover the bars.
+				</SectionHeading>
+				<ul class="flex flex-col gap-3">
+					<CheckItem>Amounts in different currencies are never mixed</CheckItem>
+					<CheckItem>Tax summary by rate, ready for your return</CheckItem>
+					<CheckItem>CSV exports and every PDF in one zip, for your accountant</CheckItem>
+				</ul>
+			</div>
+		</section>
+
+		<section class="grid items-center gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+			<div class="flex flex-col gap-8">
+				<SectionHeading number="04" label="Fly" title="Your keyboard, everywhere">
+					⌘K finds any client or invoice and runs any command. Single-key shortcuts for the things you
+					do every day, and real menus on every platform.
+				</SectionHeading>
+				<div class="flex flex-wrap items-center gap-3">
+					<button
+						type="button"
+						data-open-command
+						class="inline-flex h-10 items-center gap-2.5 rounded-lg border bg-card px-4 text-sm font-medium transition-colors hover:bg-accent"
+					>
+						Try it on this page
+						<kbd class="rounded border bg-background px-1.5 py-0.5 font-sans text-xs text-muted-foreground">⌘K</kbd>
+					</button>
+					<span class="text-sm text-muted-foreground">
+						<kbd class="rounded border px-1.5 py-0.5 font-sans text-xs">C</kbd> new invoice ·
+						<kbd class="rounded border px-1.5 py-0.5 font-sans text-xs">G</kbd>
+						<kbd class="rounded border px-1.5 py-0.5 font-sans text-xs">I</kbd> invoices
+					</span>
+				</div>
+			</div>
+			<Reveal client:visible delay={0.1} y={32}>
+				<CommandDemo client:visible />
+			</Reveal>
+		</section>
+	</div>
+
+	<section id="tour" class="scroll-mt-16 border-y bg-card/40">
+		<div class="mx-auto flex max-w-6xl flex-col gap-12 px-5 py-28">
+			<SectionHeading number="05" label="Tour" title="The real thing, screen by screen">
+				No mockups: these are screenshots of the app.
+			</SectionHeading>
+			<Tour client:visible shots={shots} />
+		</div>
+	</section>
+
+	<section id="palettes" class="mx-auto flex max-w-6xl scroll-mt-20 flex-col gap-12 px-5 py-28">
+		<SectionHeading number="06" label="Yours" title="Ten palettes. Go on, pick one.">
+			The app comes in light and dark and ten colour palettes. This site uses the same colours, so it
+			changes too.
+		</SectionHeading>
+		<PalettePicker client:visible />
+	</section>
+
+	<section class="mx-auto max-w-6xl px-5 pb-28">
+		<SectionHeading number="07" label="Own" title="Your invoices live on your computer" class="mb-12">
+			Not on our servers, because there aren't any. Open the app on a plane and it works.
+		</SectionHeading>
+		<div class="grid gap-3 md:grid-cols-3">
+			{
+				[
+					{
+						title: "Local-first",
+						items: ["A database file on your disk", "No account, no sign-in", "Works fully offline"],
+					},
+					{
+						title: "Backed up",
+						items: [
+							"Daily backups, kept for two weeks",
+							"A copy before every update",
+							"Restore from a file in a click",
+						],
+					},
+					{
+						title: "Built for small studios",
+						items: [
+							"Separate workspaces per business",
+							"Your numbering, your terms",
+							"Any currency, per-line taxes",
+						],
+					},
+				].map((card, index) => (
+					<Reveal client:visible delay={index * 0.08} y={16} className="h-full">
+						<div class="flex h-full flex-col gap-5 rounded-xl border bg-card p-6">
+							<h3 class="font-medium">{card.title}</h3>
+							<ul class="flex flex-col gap-3">
+								{card.items.map((item) => (
+									<CheckItem>{item}</CheckItem>
+								))}
+							</ul>
+						</div>
+					</Reveal>
+				))
+			}
+		</div>
+	</section>
+
+	<!-- The closing call to action, like dawn.studio's. -->
+	<section class="relative overflow-hidden border-t">
+		<div
+			aria-hidden="true"
+			class="pointer-events-none absolute -bottom-1/2 left-1/2 -z-10 size-[720px] -translate-x-1/2 rounded-full bg-primary/15 blur-[140px]"
+		>
+		</div>
+		<div class="mx-auto flex max-w-6xl flex-col gap-8 px-5 py-28 md:flex-row md:items-end md:justify-between">
+			<Reveal client:visible>
+				<h2 class="text-4xl font-semibold tracking-[-0.04em] text-balance sm:text-6xl">
+					Get paid for<br />what you make.
+				</h2>
+				<p class="mt-4 max-w-md text-lg text-muted-foreground">
+					Download Invoicing for macOS, Windows or Linux and send your first invoice today.
+				</p>
+			</Reveal>
+			<Reveal client:visible delay={0.1} className="flex flex-wrap gap-3">
+				<a
+					href="/download"
+					class="inline-flex h-12 items-center gap-2 rounded-lg bg-primary px-6 font-medium text-primary-foreground shadow-[0_10px_30px_-10px] shadow-primary/70 transition-[filter] hover:brightness-110 [&_svg]:size-4"
+				>
+					<Download />
+					Download
+				</a>
+				<a
+					href="/changelog"
+					class="inline-flex h-12 items-center gap-2 rounded-lg border bg-card px-5 font-medium transition-colors hover:bg-accent [&_svg]:size-4"
+				>
+					What's new
+					<ArrowUpRight />
+				</a>
+			</Reveal>
+		</div>
+	</section>
 </BaseLayout>

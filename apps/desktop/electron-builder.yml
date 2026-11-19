@@ -6,14 +6,18 @@ directories:
   output: release
 files:
   - out/**
-  # better-sqlite3 ships Node-API binaries for every platform; keep only the target's.
-  - "!**/better-sqlite3/prebuilds/*.node"
-  - "**/better-sqlite3/prebuilds/${platform}-${arch}.node"
+# better-sqlite3 ships Node-API binaries for every OS; each platform below drops the other
+# OSes' ones. (Named explicitly: the ${platform} macro means the machine building, not the
+# target, and a platform's patterns can't re-include what the shared list excludes.) Both
+# CPU architectures of the OS stay in; that costs ~2 MB.
 # SQL migrations are applied on startup from Resources/migrations.
 extraResources:
   - from: ../../packages/db/migrations
     to: migrations
 asar: true
+# better-sqlite3's prebuilt binaries use Node-API, which Electron loads as is: no rebuild
+# against Electron's headers, so one machine can package every architecture.
+npmRebuild: false
 # Lock down Electron runtime switches: no running the binary as plain Node, no inspector flags,
 # and only load (integrity-checked) code from app.asar.
 electronFuses:
@@ -23,25 +27,53 @@ electronFuses:
   enableNodeCliInspectArguments: false
   enableEmbeddedAsarIntegrityValidation: true
   onlyLoadAppFromAsar: true
+# Updates come from GitHub Releases. The release workflow adds the `publish` settings (owner
+# and repo come from the repository it runs in), which also writes app-update.yml into the app;
+# local builds have none, so they never check for updates.
 mac:
   category: public.app-category.business
+  files:
+    - "!**/better-sqlite3/prebuilds/{linux,linuxmusl,win32}-*.node"
+  # Separate Apple silicon and Intel apps (smaller downloads than a universal one). The zips
+  # carry latest-mac.yml, which the app reads to learn about new versions.
   target:
     - target: dmg
+      arch: [arm64, x64]
+    - target: zip
       arch: [arm64, x64]
   # Ad-hoc signature until there is an Apple Developer ID; no notarization.
   # Hardened runtime only matters for notarization and breaks ad-hoc signed apps.
   identity: "-"
   hardenedRuntime: false
   notarize: false
-dmg:
-  artifactName: ${productName}-${version}-${arch}.${ext}
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
 win:
-  target: [nsis]
+  files:
+    - "!**/better-sqlite3/prebuilds/{darwin,linux,linuxmusl}-*.node"
+  # Unsigned: SmartScreen asks once ("More info" → "Run anyway").
+  target:
+    - target: nsis
+      arch: [x64]
 nsis:
   oneClick: false
+  perMachine: false
   allowToChangeInstallationDirectory: true
-  artifactName: ${productName}-${version}-setup.${ext}
+  createDesktopShortcut: true
+  artifactName: ${productName}-${version}-windows-setup.${ext}
 linux:
-  target: [AppImage, deb]
+  files:
+    - "!**/better-sqlite3/prebuilds/{darwin,win32,linuxmusl}-*.node"
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+  executableName: invoicing
   category: Office
+  synopsis: Local-first invoicing for freelancers and small studios
+  # Debian wants "Name <email>"; add the support address here once there is one.
   maintainer: Dawn Studio
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}
+deb:
+  packageName: invoicing
+  artifactName: invoicing_${version}_${arch}.${ext}

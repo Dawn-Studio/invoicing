@@ -1,0 +1,50 @@
+---
+import { getCollection, render } from "astro:content";
+import { Reveal } from "../components/reveal";
+import BaseLayout from "../layouts/base-layout.astro";
+import { releasesUrl } from "../site";
+
+const entries = (await getCollection("changelog")).sort((a, b) =>
+	b.data.version.localeCompare(a.data.version, undefined, { numeric: true }),
+);
+const rendered = await Promise.all(
+	entries.map(async (entry) => ({ entry, ...(await render(entry)) })),
+);
+const dateFormat = new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" });
+---
+
+<BaseLayout title="Changelog" description="What's new in each version of Invoicing.">
+	<section class="mx-auto max-w-3xl px-5 pt-20 pb-24">
+		<Reveal client:load>
+			<h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">Changelog</h1>
+			<p class="mt-4 text-lg text-muted-foreground">
+				What's new in each version. Downloads and older versions are on the <a
+					href={releasesUrl}
+					class="underline underline-offset-4 hover:text-foreground">releases page</a
+				>.
+			</p>
+		</Reveal>
+
+		<ol class="mt-16 flex flex-col gap-16">
+			{
+				rendered.map(({ entry, Content }) => (
+					<li id={`v${entry.data.version}`} class="grid scroll-mt-24 gap-4 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-10">
+						<div class="flex flex-col gap-1 sm:sticky sm:top-24 sm:self-start">
+							<a href={`#v${entry.data.version}`} class="font-mono text-sm font-medium">
+								{entry.data.version}
+							</a>
+							<span class="text-sm text-muted-foreground">
+								{entry.data.date ? dateFormat.format(entry.data.date) : "Coming soon"}
+							</span>
+						</div>
+						<article class="prose">
+							<h2>{entry.data.title}</h2>
+							<p class="lead">{entry.data.summary}</p>
+							<Content />
+						</article>
+					</li>
+				))
+			}
+		</ol>
+	</section>
+</BaseLayout>

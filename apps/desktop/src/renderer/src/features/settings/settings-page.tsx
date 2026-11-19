@@ -43,6 +43,7 @@ import {
 } from "../../lib/queries";
 import { LogoPanel } from "../profile/logo-panel";
 import { ProfileForm, type ProfileSection } from "../profile/profile-form";
+import { AboutPanel } from "../updates/about-panel";
 import { WorkspacePanel } from "../workspaces/workspace-panel";
 import { PalettePanel, ThemePanel } from "./appearance-panel";
 import { BrandingPanel } from "./branding-panel";
@@ -151,6 +152,12 @@ function SectionContent({ id }: { id: SettingsSectionId }) {
 			return (
 				<PageSection>
 					<DataPanel />
+				</PageSection>
+			);
+		case "about":
+			return (
+				<PageSection>
+					<AboutPanel />
 				</PageSection>
 			);
 	}

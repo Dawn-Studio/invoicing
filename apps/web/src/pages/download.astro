@@ -1,0 +1,91 @@
+---
+import { DownloadPicker } from "../components/download-picker";
+import { Reveal } from "../components/reveal";
+import BaseLayout from "../layouts/base-layout.astro";
+import { releasesUrl, SITE } from "../site";
+
+const steps = [
+	{
+		id: "macos",
+		title: "macOS",
+		items: [
+			"Open the .dmg and drag Invoicing into Applications.",
+			"The first time, macOS says it can't check the app for malicious software, because it isn't notarized by Apple yet. Right-click Invoicing in Applications, choose Open, then Open again. (On macOS 15 and later: try to open it once, then go to System Settings → Privacy & Security and click Open Anyway.)",
+			"From then on it opens normally. When a new version is out, the app tells you and links here; drag the new version into Applications to replace the old one. Your data is kept.",
+		],
+	},
+	{
+		id: "windows",
+		title: "Windows",
+		items: [
+			"Run the installer. Windows SmartScreen may warn about an unrecognised app, because the installer isn't code-signed yet: click More info, then Run anyway.",
+			"Choose where to install it; a Start menu and desktop shortcut are added.",
+			"Updates download in the background and install the next time you restart the app.",
+		],
+	},
+	{
+		id: "linux",
+		title: "Linux",
+		items: [
+			"AppImage: make it executable (chmod +x Invoicing-*.AppImage, or Properties → Allow executing) and run it. It updates itself.",
+			"Debian and Ubuntu: sudo apt install ./invoicing_*_amd64.deb. To update, install the newer .deb the same way; the app tells you when there is one.",
+		],
+	},
+];
+---
+
+<BaseLayout
+	title="Download"
+	description="Download Invoicing for macOS (Apple silicon and Intel), Windows and Linux, and how to open it the first time."
+>
+	<section class="mx-auto max-w-3xl px-5 pt-20 pb-16">
+		<Reveal client:load>
+			<h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">Download Invoicing</h1>
+			<p class="mt-4 text-lg text-muted-foreground">
+				For macOS, Windows and Linux. Your invoices stay on your computer, so there's nothing to sign
+				up for.
+			</p>
+		</Reveal>
+		<div class="mt-10">
+			<DownloadPicker client:load repo={SITE.repo} />
+		</div>
+		<p class="mt-4 text-sm text-muted-foreground">
+			Older versions and checksums are on the <a
+				href={releasesUrl}
+				class="underline underline-offset-4 hover:text-foreground">releases page</a
+			>.
+		</p>
+	</section>
+
+	<section id="first-launch" class="scroll-mt-20 border-t bg-muted/40">
+		<div class="mx-auto max-w-3xl px-5 py-20">
+			<h2 class="text-2xl font-semibold tracking-tight sm:text-3xl">Opening it the first time</h2>
+			<p class="mt-3 text-muted-foreground">
+				Invoicing isn't signed with paid Apple and Microsoft certificates yet, so your computer asks
+				you to confirm once. That's the only extra step.
+			</p>
+			<div class="mt-10 flex flex-col gap-10">
+				{
+					steps.map((platform) => (
+						<div id={platform.id} class="scroll-mt-20">
+							<h3 class="text-lg font-medium">{platform.title}</h3>
+							<ol class="mt-3 flex flex-col gap-3">
+								{platform.items.map((item, index) => (
+									<li class="flex gap-3 text-[0.9375rem] text-pretty text-muted-foreground">
+										<span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-medium text-brand-ink">
+											{index + 1}
+										</span>
+										<span class="pt-0.5">{item}</span>
+									</li>
+								))}
+							</ol>
+						</div>
+					))
+				}
+			</div>
+			<p class="mt-12 text-sm text-muted-foreground">
+				Requirements: macOS 12 or later, Windows 10 or 11 (64-bit), or a 64-bit Linux desktop.
+			</p>
+		</div>
+	</section>
+</BaseLayout>

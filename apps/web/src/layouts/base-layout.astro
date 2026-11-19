@@ -1,30 +1,87 @@
 ---
 import "../styles/global.css";
+import { SiteCommand } from "../components/site-command";
+import SiteFooter from "../components/site-footer.astro";
+import SiteHeader from "../components/site-header.astro";
+import { SITE } from "../site";
 
 interface Props {
-	title: string;
-	description: string;
+	/** Page title; the site name is appended unless this is the home page. */
+	title?: string;
+	description?: string;
+	/** Absolute path of the Open Graph image in /public. */
+	image?: string;
+	/** Structured data for search engines (JSON-LD). */
+	jsonLd?: Record<string, unknown>;
+	/** Keep the page out of search results (the 404 page). */
+	noindex?: boolean;
 }
 
-const { title, description } = Astro.props;
+const {
+	title,
+	description = SITE.description,
+	image = "/og.png",
+	jsonLd,
+	noindex = false,
+} = Astro.props;
+const fullTitle = title ? `${title} · ${SITE.name}` : SITE.title;
+const site = Astro.site ?? new URL(SITE.url);
+// Pages build to /download.html but are served (and listed in the sitemap) as /download.
+const path = Astro.url.pathname.replace(/(\/index)?\.html$/, "") || "/";
+const canonical = new URL(path, site).href;
+const imageUrl = new URL(image, site).href;
 ---
 
 <!doctype html>
-<html lang="en">
+<!-- Dark like the app's own look; the colour palette is the visitor's pick (see palette-picker). -->
+<html lang="en" class="dark" data-palette="lime">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{fullTitle}</title>
 		<meta name="description" content={description} />
-		<title>{title}</title>
-		<!-- Apply the OS theme before first paint to avoid a light flash in dark mode. -->
+		{noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="/favicon.png" type="image/png" sizes="64x64" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="sitemap" href="/sitemap-index.xml" />
+		<meta name="theme-color" content="#0e100c" />
+		<meta name="color-scheme" content="dark" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content={SITE.name} />
+		<meta property="og:title" content={fullTitle} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:image" content={imageUrl} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="The Invoicing app with an invoice and its live preview" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={fullTitle} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={imageUrl} />
+		{jsonLd ? <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} /> : null}
+
+		<!-- The palette picked on the home page, before first paint. -->
 		<script is:inline>
-			const media = window.matchMedia("(prefers-color-scheme: dark)");
-			const apply = () => document.documentElement.classList.toggle("dark", media.matches);
-			apply();
-			media.addEventListener("change", apply);
+			try {
+				const palette = localStorage.getItem("palette");
+				if (palette) document.documentElement.dataset.palette = palette;
+			} catch {}
 		</script>
 	</head>
-	<body class="min-h-dvh">
-		<slot />
+	<body class="flex min-h-dvh flex-col bg-background text-foreground antialiased">
+		<a
+			href="#content"
+			class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2"
+			>Skip to content</a
+		>
+		<SiteHeader />
+		<main id="content" class="flex-1">
+			<slot />
+		</main>
+		<SiteFooter />
+		<SiteCommand client:idle />
 	</body>
 </html>

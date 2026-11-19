@@ -13,6 +13,7 @@ import { useNavigate } from "react-router";
 import { type AppCommand, ROUTES } from "../../../shared/api";
 import { useStartInvoice } from "../features/invoices/use-start-invoice";
 import { useBackupActions } from "../features/settings/data-panel";
+import { UpdateToasts } from "../features/updates/update-notice";
 import { CommandPalette } from "./command-palette";
 import { Shortcut } from "./shortcut";
 
@@ -66,6 +67,8 @@ export function GlobalHotkeys() {
 				return void backups.inspect();
 			case "theme.changed":
 				return void queryClient.invalidateQueries({ queryKey: ["preferences"] });
+			case "update.status":
+				return void queryClient.invalidateQueries({ queryKey: ["updates"] });
 		}
 	};
 	useEffect(() => window.api.onCommand((command) => handle.current(command)), []);
@@ -84,6 +87,7 @@ export function GlobalHotkeys() {
 		<>
 			<CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} actions={paletteActions} />
 			<ShortcutsSheet open={sheetOpen} onOpenChange={setSheetOpen} />
+			<UpdateToasts />
 			{backups.dialog}
 		</>
 	);

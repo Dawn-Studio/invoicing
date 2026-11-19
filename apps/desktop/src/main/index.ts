@@ -10,12 +10,13 @@ import {
 	screen,
 	shell,
 } from "electron";
-import { PALETTE_CHANNEL } from "../shared/api";
+import { type AppCommand, COMMAND_CHANNEL, PALETTE_CHANNEL } from "../shared/api";
 import { discardAllStaged } from "./backups";
 import { createHandlers } from "./handlers";
 import { installMenu } from "./menu";
 import { getPalette, getTheme, getWindowBounds, saveWindowBounds, setTheme } from "./preferences";
 import { registerRpc } from "./rpc";
+import { Updates } from "./updates";
 import { WorkspaceManager } from "./workspaces";
 
 const isMac = process.platform === "darwin";
@@ -158,9 +159,16 @@ app.whenReady().then(() => {
 		workspaces.close();
 	});
 
-	const refreshMenu = installMenu({ window: () => mainWindow, openWindow: createWindow });
-	registerRpc(createHandlers(workspaces, { onThemeChanged: refreshMenu }));
+	const notify = (command: AppCommand) => mainWindow?.webContents.send(COMMAND_CHANNEL, command);
+	const updates = new Updates(() => notify({ type: "update.status" }));
+	const refreshMenu = installMenu({
+		window: () => mainWindow,
+		openWindow: createWindow,
+		checkForUpdates: () => void updates.check(),
+	});
+	registerRpc(createHandlers(workspaces, { onThemeChanged: refreshMenu, updates }));
 	createWindow();
+	updates.start();
 
 	// Opaque windows paint their own background; keep it in step with the theme.
 	nativeTheme.on("updated", () => {
