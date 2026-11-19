@@ -55,6 +55,32 @@ export interface ExportSettings {
 export const REPORT_EXPORT_KINDS = ["invoices", "payments", "items", "pdfs"] as const;
 export type ReportExportKind = (typeof REPORT_EXPORT_KINDS)[number];
 
+export type BackupReason = "daily" | "quit" | "pre-migration" | "pre-restore" | "manual";
+
+/** One of a workspace's own backups, in its backup folder. */
+export interface BackupEntry {
+	/** File name; also how the renderer refers to it. */
+	name: string;
+	createdAt: number;
+	reason: BackupReason;
+	/** Bytes. */
+	size: number;
+}
+
+/** What a checked backup contains, shown before the user confirms a restore. */
+export interface BackupPreview {
+	/** Refers to the unpacked copy waiting in main. */
+	token: string;
+	workspaceName: string;
+	businessName: string | null;
+	createdAt: number;
+	reason: BackupReason;
+	appVersion: string;
+	clients: number;
+	invoices: number;
+	drafts: number;
+}
+
 export interface AppInfo {
 	name: string;
 	version: string;
@@ -270,6 +296,26 @@ export const contract = {
 		input: z.object({ kind: z.enum(REPORT_EXPORT_KINDS), from: isoDateSchema, to: isoDateSchema }),
 		output: returns<{ path: string; count: number } | null>(),
 	},
+	/** The open workspace's backups, newest first. */
+	"backups.list": { input: z.void(), output: returns<BackupEntry[]>() },
+	"backups.create": { input: z.void(), output: returns<BackupEntry[]>() },
+	/** Asks where to save a backup file of the open workspace; null when cancelled. */
+	"backups.export": { input: z.void(), output: returns<{ path: string } | null>() },
+	/**
+	 * Checks and unpacks a backup for restoring: one of the workspace's own (by name), or a
+	 * file the user picks (no name). Null when the file dialog is cancelled.
+	 */
+	"backups.inspect": {
+		input: z.object({ name: z.string().max(200).optional() }),
+		output: returns<BackupPreview | null>(),
+	},
+	"backups.restore": {
+		input: z.object({ token: z.string().max(100), mode: z.enum(["new", "replace"]) }),
+		output: returns<WorkspaceList>(),
+	},
+	"backups.discard": { input: z.object({ token: z.string().max(100) }), output: returns<void>() },
+	/** Opens the app's data folder (databases, logos, backups) in Finder / Explorer. */
+	"app.showDataFolder": { input: z.void(), output: returns<void>() },
 	"invoices.void": {
 		input: byId.extend({ reason: z.string().max(500).optional() }),
 		output: returns<Invoice>(),

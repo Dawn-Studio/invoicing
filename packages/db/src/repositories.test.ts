@@ -1,4 +1,12 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -421,20 +429,90 @@ describe("database file", () => {
 	});
 	afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-	it("persists data, reapplies migrations idempotently and backs up", async () => {
+	it("persists data, reapplies migrations idempotently and snapshots", () => {
 		const file = join(dir, "invoicing.db");
 		const first = openDatabase({ file, migrationsFolder });
 		createRepositories(first.db).profile.save(profileInput);
-		await first.backup(join(dir, "backup.db"));
+		first.snapshot(join(dir, "backup.db"));
 		first.close();
 
 		const second = openDatabase({ file, migrationsFolder });
 		expect(createRepositories(second.db).profile.get()?.name).toBe("Dawn Studio");
+		expect(second.integrityCheck()).toBe("ok");
 		second.close();
 
 		const restored = openDatabase({ file: join(dir, "backup.db"), migrationsFolder });
 		expect(createRepositories(restored.db).profile.get()?.name).toBe("Dawn Studio");
 		restored.close();
+	});
+
+	it("snapshots an existing database before migrating it, not a new one", () => {
+		// An "older app": only the first migration.
+		const older = join(dir, "older-migrations");
+		mkdirSync(join(older, "meta"), { recursive: true });
+		const journal = JSON.parse(readFileSync(join(migrationsFolder, "meta/_journal.json"), "utf8"));
+		const firstEntry = journal.entries[0];
+		writeFileSync(
+			join(older, "meta/_journal.json"),
+			JSON.stringify({ ...journal, entries: [firstEntry] }),
+		);
+		copyFileSync(
+			join(migrationsFolder, `${firstEntry.tag}.sql`),
+			join(older, `${firstEntry.tag}.sql`),
+		);
+
+		const file = join(dir, "invoicing.db");
+		const calls: number[] = [];
+		const beforeMigrate = ({
+			pending,
+			snapshot,
+		}: {
+			pending: number;
+			snapshot: (to: string) => void;
+		}) => {
+			calls.push(pending);
+			snapshot(join(dir, "pre-migration.db"));
+		};
+		const fresh = openDatabase({ file, migrationsFolder: older, beforeMigrate });
+		createRepositories(fresh.db).settings.set("marker", "kept");
+		fresh.close();
+		expect(calls).toEqual([]);
+
+		const upgraded = openDatabase({ file, migrationsFolder, beforeMigrate });
+		upgraded.close();
+		expect(calls).toEqual([journal.entries.length - 1]);
+		expect(existsSync(join(dir, "pre-migration.db"))).toBe(true);
+
+		// The snapshot is the old schema with the data in it.
+		const copy = openDatabase({ file: join(dir, "pre-migration.db"), migrationsFolder: older });
+		expect(createRepositories(copy.db).settings.get("marker")).toBe("kept");
+		copy.close();
+
+		// A failing hook stops the upgrade and leaves the file unmigrated.
+		const other = join(dir, "other.db");
+		openDatabase({ file: other, migrationsFolder: older }).close();
+		expect(() =>
+			openDatabase({
+				file: other,
+				migrationsFolder,
+				beforeMigrate: () => {
+					throw new Error("disk full");
+				},
+			}),
+		).toThrow("disk full");
+		expect(
+			openDatabase({ file: other, migrationsFolder: older, beforeMigrate }).integrityCheck(),
+		).toBe("ok");
+	});
+
+	it("refuses data written by a newer version of the app", () => {
+		const file = join(dir, "invoicing.db");
+		const first = openDatabase({ file, migrationsFolder });
+		first.db.run(
+			sql`INSERT INTO __drizzle_migrations (hash, created_at) VALUES ('future', 99999999999999)`,
+		);
+		first.close();
+		expectDomainError(() => openDatabase({ file, migrationsFolder }), "INVALID_STATE");
 	});
 });
 

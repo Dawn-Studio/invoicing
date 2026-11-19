@@ -1,6 +1,7 @@
 import { release } from "node:os";
 import { join } from "node:path";
 import { app, BrowserWindow, dialog, nativeTheme, shell } from "electron";
+import { discardAllStaged } from "./backups";
 import { createHandlers } from "./handlers";
 import { registerRpc } from "./rpc";
 import { WorkspaceManager } from "./workspaces";
@@ -83,10 +84,18 @@ app.whenReady().then(() => {
 		app.exit(1);
 		return;
 	}
-	app.on("will-quit", () => workspaces.close());
+	app.on("will-quit", () => {
+		discardAllStaged();
+		workspaces.close();
+	});
 
 	registerRpc(createHandlers(workspaces));
 	createWindow();
+
+	// A daily backup: checked shortly after launch (not delaying the window) and every hour
+	// for an app left open for days.
+	setTimeout(() => workspaces.backupIfDue(), 5_000).unref();
+	setInterval(() => workspaces.backupIfDue(), 60 * 60 * 1000).unref();
 
 	app.on("activate", () => {
 		if (BrowserWindow.getAllWindows().length === 0) createWindow();

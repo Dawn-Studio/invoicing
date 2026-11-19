@@ -18,8 +18,6 @@ import {
 	DropdownMenuTrigger,
 } from "@dawnstudio/ui/components/dropdown-menu";
 import {
-	DetailList,
-	DetailRow,
 	Panel,
 	PanelBody,
 	PanelHeader,
@@ -32,7 +30,6 @@ import { toast } from "sonner";
 import { Page, PageSection } from "../../components/page";
 import { showSaveError } from "../../lib/forms";
 import {
-	useAppInfo,
 	useArchivePaymentAccount,
 	useArchiveTaxRate,
 	usePaymentAccounts,
@@ -45,6 +42,7 @@ import { LogoPanel } from "../profile/logo-panel";
 import { ProfileForm } from "../profile/profile-form";
 import { WorkspacePanel } from "../workspaces/workspace-panel";
 import { BrandingPanel } from "./branding-panel";
+import { DataPanel } from "./data-panel";
 import { EmailPanel } from "./email-panel";
 import { ExportPanel } from "./export-panel";
 import { PaymentAccountForm } from "./payment-account-form";
@@ -289,24 +287,5 @@ function RowMenu({
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
-	);
-}
-
-function DataPanel() {
-	const { data: info } = useAppInfo();
-	return (
-		<Panel>
-			<PanelHeader>
-				<PanelTitle>Data</PanelTitle>
-			</PanelHeader>
-			<PanelBody>
-				<DetailList>
-					<DetailRow label="Stored at">
-						<span className="font-mono text-sm break-all">{info?.dataPath ?? "…"}</span>
-					</DetailRow>
-					<DetailRow label="Version">{info?.version ?? "…"}</DetailRow>
-				</DetailList>
-			</PanelBody>
-		</Panel>
 	);
 }

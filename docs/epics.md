@@ -112,14 +112,14 @@ Know how the business is doing without a spreadsheet.
 - ✅ Export CSV (invoices, payments, line items) and a zip of PDFs for a period
 - 🔮 Custom date ranges (presets only for now: this/last month, quarter, year)
 
-### E9 · Data safety & portability ⬜
+### E9 · Data safety & portability ✅
 
 Local-first means the user's data must never be lost.
 
-- ⬜ Automatic SQLite backups (rotating, on quit and daily)
-- ⬜ Manual backup export / import (restore) with a confirmation
-- ⬜ Show the data folder; open in Finder
-- ⬜ Migration safety: back up before running migrations
+- ✅ Automatic backups per workspace (`userData/backups/<workspace>/`): daily (checked at launch and hourly) and on quit / switching away when the data changed; the last 14 kept. Format: a `.invoicingbackup` zip with a `VACUUM INTO` snapshot, the logos and a manifest
+- ✅ Manual backup ("Back up now", "Save backup as…") and restore from the list or a file: the backup is unpacked, integrity-checked and migrated on a temp copy, then previewed (business, clients, invoices) before restoring as a new workspace or replacing the open one (which is backed up first and put back if the restore won't open)
+- ✅ Show the data folder; open in Finder
+- ✅ Migration safety: a snapshot before pending migrations run on existing data (a failed backup stops the upgrade); data from a newer app version is refused instead of opened
 - 🔮 Encrypted backups
 
 ### E10 · App shell & experience 🟡

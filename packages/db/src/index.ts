@@ -1,2 +1,9 @@
-export { type Db, type OpenDatabaseOptions, type OpenedDatabase, openDatabase } from "./database";
+export {
+	type Db,
+	migrationStatus,
+	type OpenDatabaseOptions,
+	type OpenedDatabase,
+	openDatabase,
+	peekBusinessName,
+} from "./database";
 export * from "./repositories";

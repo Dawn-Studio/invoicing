@@ -1,10 +1,31 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	renameSync,
+	rmSync,
+	statSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { DomainError, uuidv7 } from "@dawnstudio/core";
-import { createRepositories, type OpenedDatabase, openDatabase } from "@dawnstudio/db";
+import {
+	createRepositories,
+	type OpenedDatabase,
+	openDatabase,
+	peekBusinessName,
+} from "@dawnstudio/db";
 import { app, shell } from "electron";
 import { z } from "zod";
-import type { Workspace, WorkspaceList } from "../shared/contract";
+import type { BackupReason, Workspace, WorkspaceList } from "../shared/contract";
+import {
+	listBackups,
+	migrationsFolder,
+	replaceDatabaseFile,
+	takeStaged,
+	writeAutomaticBackup,
+	writeBackup,
+} from "./backups";
 
 /**
  * Workspaces are separate businesses (e.g. "Personal" and "Studio"), each the issuer on its
@@ -34,11 +55,7 @@ const LEGACY_FILE = "invoicing.db";
 const userData = () => app.getPath("userData");
 const registryPath = () => join(userData(), "workspaces.json");
 
-function migrationsFolder() {
-	return app.isPackaged
-		? join(process.resourcesPath, "migrations")
-		: join(__dirname, "../../../../packages/db/migrations");
-}
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export class WorkspaceManager {
 	private registry: Registry;
@@ -62,6 +79,92 @@ export class WorkspaceManager {
 		return join(userData(), this.activeEntry().file);
 	}
 
+	get active(): Workspace {
+		return this.toWorkspace(this.activeEntry());
+	}
+
+	/** Backs up the open workspace now, into its backup folder. */
+	backupNow(reason: BackupReason) {
+		writeAutomaticBackup(this.opened.database.snapshot, this.entry(this.opened.id), reason);
+	}
+
+	/** Writes a backup of the open workspace to a file the user chose. */
+	exportBackup(destination: string) {
+		writeBackup(this.opened.database.snapshot, this.entry(this.opened.id), destination, "manual");
+	}
+
+	/** The daily backup, if the newest one is more than a day old. Never throws. */
+	backupIfDue() {
+		this.safely(() => {
+			const newest = listBackups(this.opened.id)[0];
+			if (!newest || Date.now() - newest.createdAt >= DAY_MS) this.backupNow("daily");
+		});
+	}
+
+	/** On quit or switching away: backs up the open workspace if it changed since its last backup. */
+	backupIfChanged() {
+		this.safely(() => {
+			const path = join(userData(), this.entry(this.opened.id).file);
+			const modified = Math.max(
+				...["", "-wal"].map((suffix) =>
+					existsSync(path + suffix) ? statSync(path + suffix).mtimeMs : 0,
+				),
+			);
+			const newest = listBackups(this.opened.id)[0];
+			if (!newest || modified > newest.createdAt) this.backupNow("quit");
+		});
+	}
+
+	/**
+	 * Restores a staged backup, either as a new workspace (nothing existing is touched) or over
+	 * the open one. Replacing first backs up the current data, and puts it back if the restored
+	 * file won't open.
+	 */
+	restore(token: string, mode: "new" | "replace"): WorkspaceList {
+		const backup = takeStaged(token);
+		try {
+			if (mode === "new") {
+				const id = uuidv7();
+				mkdirSync(join(userData(), "workspaces"), { recursive: true });
+				const file = join("workspaces", `${id}.db`);
+				replaceDatabaseFile(backup.databaseFile, join(userData(), file));
+				this.registry.workspaces.push({
+					id,
+					name: `${backup.manifest.workspace.name} (restored)`,
+					file,
+					createdAt: Date.now(),
+				});
+				try {
+					return this.switchTo(id);
+				} catch (error) {
+					this.registry.workspaces = this.registry.workspaces.filter((w) => w.id !== id);
+					this.save();
+					throw error;
+				}
+			}
+
+			const entry = this.entry(this.opened.id);
+			this.backupNow("pre-restore");
+			const path = join(userData(), entry.file);
+			const previous = `${path}.before-restore`;
+			this.opened.database.close();
+			replaceDatabaseFile(path, previous);
+			try {
+				replaceDatabaseFile(backup.databaseFile, path);
+				this.opened = this.open(entry.id);
+			} catch (error) {
+				replaceDatabaseFile(previous, path);
+				this.opened = this.open(entry.id);
+				throw error;
+			} finally {
+				rmSync(previous, { force: true });
+			}
+			return this.list();
+		} finally {
+			rmSync(backup.databaseFile, { force: true });
+		}
+	}
+
 	list(): WorkspaceList {
 		return {
 			activeId: this.registry.activeId,
@@ -83,6 +186,7 @@ export class WorkspaceManager {
 		if (id !== this.opened.id) {
 			// Open the new one first: if it fails, the current workspace stays open.
 			const next = this.open(id);
+			this.backupIfChanged();
 			this.opened.database.close();
 			this.opened = next;
 		}
@@ -117,8 +221,19 @@ export class WorkspaceManager {
 		return this.list();
 	}
 
+	/** Backs up what changed, then closes the database. */
 	close() {
+		this.backupIfChanged();
 		this.opened.database.close();
+	}
+
+	/** Backups must never stop the app from working; failures are logged. */
+	private safely(action: () => void) {
+		try {
+			action();
+		} catch (error) {
+			console.error("Backup failed", error);
+		}
 	}
 
 	private open(id: string) {
@@ -126,6 +241,8 @@ export class WorkspaceManager {
 		const database = openDatabase({
 			file: join(userData(), entry.file),
 			migrationsFolder: migrationsFolder(),
+			// An app update is about to change the tables: keep a copy of the data as it was.
+			beforeMigrate: ({ snapshot }) => writeAutomaticBackup(snapshot, entry, "pre-migration"),
 		});
 		return { id, database, repos: createRepositories(database.db) };
 	}
@@ -177,15 +294,6 @@ export class WorkspaceManager {
 
 /** Names the adopted workspace after the business already set up in it. */
 function legacyName(): string | null {
-	const file = join(userData(), LEGACY_FILE);
-	if (!existsSync(file)) return null;
-	let database: OpenedDatabase | null = null;
-	try {
-		database = openDatabase({ file, migrationsFolder: migrationsFolder() });
-		return createRepositories(database.db).profile.get()?.name || null;
-	} catch {
-		return null;
-	} finally {
-		database?.close();
-	}
+	// Read-only and without migrating: the real open (with its pre-update backup) comes next.
+	return peekBusinessName(join(userData(), LEGACY_FILE));
 }

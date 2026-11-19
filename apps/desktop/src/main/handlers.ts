@@ -1,4 +1,12 @@
-import { app } from "electron";
+import { app, shell } from "electron";
+import {
+	askBackupDestination,
+	askBackupFile,
+	backupPath,
+	discardStaged,
+	listBackups,
+	stageBackup,
+} from "./backups";
 import { getEmailTemplates, prepareEmail, saveEmailTemplates } from "./email";
 import { chooseCsvFile, chooseLogo, logoDataUrl } from "./files";
 import {
@@ -6,6 +14,7 @@ import {
 	exportPdf,
 	exportPdfs,
 	getExportSettings,
+	markExported,
 	printInvoice,
 	revealExported,
 	saveExportSettings,
@@ -104,6 +113,28 @@ export function createHandlers(workspaces: WorkspaceManager): Handlers {
 			repos().reports.dashboard({ currency: input?.currency, fallback: fallbackCurrency() }),
 		"reports.period": (input) => repos().reports.period({ ...input, fallback: fallbackCurrency() }),
 		"reports.export": (input) => exportReport(repos(), input),
+		"backups.list": () => listBackups(workspaces.active.id),
+		"backups.create": () => {
+			workspaces.backupNow("manual");
+			return listBackups(workspaces.active.id);
+		},
+		"backups.export": async () => {
+			const path = await askBackupDestination(workspaces.active.name);
+			if (!path) return null;
+			workspaces.exportBackup(path);
+			markExported(path);
+			return { path };
+		},
+		"backups.inspect": async ({ name }) => {
+			const file = name ? backupPath(workspaces.active.id, name) : await askBackupFile();
+			return file ? stageBackup(file) : null;
+		},
+		"backups.restore": ({ token, mode }) => workspaces.restore(token, mode),
+		"backups.discard": ({ token }) => discardStaged(token),
+		"app.showDataFolder": async () => {
+			const error = await shell.openPath(app.getPath("userData"));
+			if (error) throw new Error(error);
+		},
 		"invoices.void": ({ id, reason }) => repos().invoices.void(id, reason),
 	};
 }
