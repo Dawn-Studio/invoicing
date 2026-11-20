@@ -2,9 +2,9 @@
 
 The product definition behind `PLAN.md`. Epics are the units that go into Linear (project **Invoicing**). Each epic lists its features; each feature becomes an issue under the epic.
 
-_Last updated 2026-11-18._
+_Last updated 2026-11-20._
 
-Status: ✅ done · 🟡 partly done · ⬜ not started · 🔮 later (needs a signed app, a backend or a decision)
+Status: ✅ done · 🟡 partly done · ⬜ not started · 🔮 later (needs a signed app, a backend or a decision) · ❌ not possible
 
 ## User paths (the ideal app)
 
@@ -81,6 +81,7 @@ Invoices that look like your studio, identical on screen and in the PDF.
 - ✅ Save dialog opening in the last-used folder (or one set in Settings), file name pattern (`{number} {client}`, `{date}`), "Show in Finder" after saving, "Exported …" in the activity
 - ✅ Snapshot stores the branding (template id, colour, font, paper, footer); older snapshots get defaults for newer fields; template ids are never reshaped, new looks get new ids
 - ✅ Print… (system print dialog, same rendering as the PDF)
+- ✅ 15 templates: Classic, Modern, Minimal, Statement, Sidebar, Banner, Bold, Letterhead, Corporate, Ledger, Editorial, Boxed, Geometric, Compact, Receipt. All use the accent, font, logo position and paper size; text in the accent colour is darkened when the accent is too light to read on white, and text on accent fills turns dark or white to match
 
 ### E6 · Sending & sharing ✅
 
@@ -136,6 +137,7 @@ A fast, keyboard-friendly, native-feeling desktop app.
 - ✅ Theme override (match system / light / dark) in Settings → Appearance, the View menu and the palette; saved per computer in `preferences.json` and applied natively (`nativeTheme.themeSource`), so vibrancy and the page follow it
 - ✅ App icon (`build/icon.svg` → `icon.png`, also the Dock icon in development); the window remembers its size, position and maximized state
 - ✅ Empty, loading and error states: first-run dashboard checklist, not-found screens for invoices and clients, "couldn't load" with retry on the dashboard, reports and app start, a crash screen per route that keeps the sidebar
+- ✅ Resizable sidebar and assistant panel: drag the edge (or focus it and use the arrow keys), double-click to reset; widths remembered on this computer, capped so the screen between them keeps at least 460 px
 
 ### E11 · Distribution & updates ✅
 
@@ -151,11 +153,13 @@ Installable on macOS, Windows and Linux without an Apple Developer account.
 
 Astro site in `apps/web`, sharing the app's design tokens and motion presets from `@dawnstudio/ui`. Settings (domain, GitHub repo) in `apps/web/src/site.ts`.
 
-- ✅ Dark, dawn.studio-style home page with live demos built on Motion: an invoice that writes, issues and gets paid in the hero; an invoice design playground (template, accent, font); an invoice list that changes status on its own; a hoverable revenue chart; a self-typing ⌘K; a palette picker that recolours the whole site with the app's ten palettes (remembered). Numbered sections, count-up stats, a currency marquee, a tour of real app screenshots, and a site-wide ⌘K menu. Reduced motion respected
+- ✅ dawn.studio-style home page with live demos built on Motion: an invoice that writes, issues and gets paid in the hero; an invoice design playground (template, accent, font); an invoice list that changes status on its own; a hoverable revenue chart; a self-typing ⌘K; a palette picker that recolours the whole site with the app's ten palettes (remembered). Numbered sections, count-up stats, a currency marquee, a tour of real app screenshots, and a site-wide ⌘K menu. Reduced motion respected
+- ✅ Light and dark site: follows the system until the visitor picks one (header toggle, ⌘K, or the switch next to the palettes); remembered and applied before first paint; the tour shows the matching screenshots
+- ✅ GitHub star count next to the header GitHub link (fetched in the browser, cached an hour; shown only above 500 stars; hidden while the repo is private or GitHub is unreachable)
 - ✅ Download page: reads the latest GitHub release in the browser, highlights the visitor's platform, lists every build with sizes, falls back to the releases page; first-launch steps for unsigned macOS/Windows builds and Linux
 - ✅ SEO: canonical URLs, Open Graph/Twitter cards (`public/og.png`), JSON-LD, sitemap, robots.txt, favicons; 404 page (noindex)
 - ✅ Changelog page from Markdown entries (`src/content/changelog`)
-- ⬜ Domain: `invoicing.dawn.studio` and `dawnstudio/invoicing` are placeholders until decided; hosting not set up
+- ⬜ Domain: `invoicing.dawn.studio` is a placeholder until decided; hosting not set up (repo is `Dawn-Studio/invoicing`)
 
 ### E13 · Integrations 🔮
 
@@ -174,6 +178,46 @@ Not in current scope; the architecture leaves room (event log, main-process side
 - 🔮 Jurisdiction-specific tax (VAT, reverse charge)
 - 🔮 Cloud sync
 
+### E15 · AI assistant 🟡
+
+Describe the work, drop in a timesheet or a screenshot of an old invoice, mention a client — get a draft invoice you review and issue. Vercel AI SDK v7, UI from AI Elements (shadcn registry, vendored in `packages/ui/src/components/ai-elements`). Off until the user connects a provider; nothing leaves the computer before that. The app is open source, which is what lets it use ChatGPT plans without OpenAI's approval.
+
+**Providers**
+
+- ✅ OpenRouter, the default: "Connect" runs OpenRouter's OAuth PKCE flow (loopback redirect on localhost, no client secret) and gets a key tied to the user's own account and credits; pasting a key also works (checked against `/key`). Spend shown in Settings. Default model `anthropic/claude-sonnet-5.5`; model picker lists tool-capable models with image/PDF support and price
+- ✅ ChatGPT plan ("Sign in with ChatGPT", open-source track): OIDC + PKCE on `127.0.0.1:1455/auth/callback`, dynamic client registration (issued client id and a per-install `ext_agent_host_id` kept), scope `chatgpt.tokens.use.direct` checked, refresh one at a time, revocation on sign-out. Requests go to the Responses API with `store: false`, streaming, developer-role instructions, no sampling settings. Plan error codes shown in plain words; "Using your ChatGPT plan · Manage usage" under the box and a one-time notice
+- ⬜ Verify both sign-ins against the live services (built from the docs; tested end to end only against a local OpenRouter stand-in)
+- ❌ Claude plan (Pro/Max): Anthropic's terms forbid it; Claude stays available through OpenRouter
+- 🔮 Own API keys (OpenAI, Anthropic) and a Dawn-hosted plan: later, with the backend and plans
+
+**Architecture**
+
+- ✅ Replies run in the main process (`src/main/assistant`): keys and tokens never reach the page; `streamText` + `toUIMessageStream` chunks go over IPC to a custom `ChatTransport` for `useChat`
+- ✅ Credentials per computer in the OS keychain (`safeStorage` async API), outside workspace files and backups; provider and model choice in `preferences.json`
+- ✅ Conversations saved per workspace (`assistant_chats`, migration 0004), before and after each reply; history menu, delete one or all
+- ✅ Attachments stored once by content hash (`userData/attachments`); messages point at `attachment:<id>`. Images and PDFs go to the model as files, CSV/TXT/Markdown/JSON as text; types checked by their bytes, 20 MB each
+- ✅ Tests: tools on a real database, error wording (`apps/desktop`, vitest); dev-only `INVOICING_OPENROUTER_API` lets end-to-end runs use a stand-in
+
+**Prompt input**
+
+- ✅ AI Elements prompt input: Enter to send, Shift+Enter for a new line, stop while streaming, retry on error, model picker
+- ✅ Attach by button, drop or paste; chips with preview; unsupported files refused with a reason
+- ✅ `@` (or the @ button) mentions clients, invoices and saved items; their current data goes with the message
+- ✅ The open invoice or client is passed along, so "this invoice" works
+- ⬜ Slash commands (suggestions on the empty screen cover the common jobs for now)
+
+**Tools**
+
+- ✅ Read: business profile, clients, invoices, saved items, tax rates, period report
+- ✅ Write, each an approval card showing exactly what will be written (client details, draft lines and total): create client, create draft invoice, update draft, save item; "Open draft" afterwards
+- ✅ Never: issuing, sending, payments, voiding and deleting stay with the user
+
+**Where it lives**
+
+- ✅ A panel on the right of every screen: ⌘J, the sidebar button, View → Assistant, and "Ask the assistant" in ⌘K (with the typed text)
+- ✅ Settings → Assistant: providers, model, per-workspace switch, delete conversations
+- ⬜ Landing page: mention the assistant and keep "local-first" honest (the provider is the one place data goes, by choice)
+
 ## Suggested order
 
-E3 → E4 → E5 → E6 → E7 → E8 → E9 → E10 (polish alongside) → E11 → E12. E13 and E14 later.
+E3 → E4 → E5 → E6 → E7 → E8 → E9 → E10 (polish alongside) → E11 → E12 → E15 (AI: connections and architecture → prompt input → read tools → write tools with approval → file extraction → panel and entry points). E13 and E14 later.

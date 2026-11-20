@@ -33,7 +33,24 @@ export const addressSchema = z.object({
 });
 export type Address = z.infer<typeof addressSchema>;
 
-export const TEMPLATES = ["classic", "modern", "minimal"] as const;
+/** Invoice designs, in the order the picker shows them. Ids are stored on invoices: never rename. */
+export const TEMPLATES = [
+	"classic",
+	"modern",
+	"minimal",
+	"statement",
+	"sidebar",
+	"banner",
+	"bold",
+	"letterhead",
+	"corporate",
+	"ledger",
+	"editorial",
+	"boxed",
+	"geometric",
+	"compact",
+	"receipt",
+] as const;
 export const FONTS = ["sans", "serif", "mono"] as const;
 export const PAPER_SIZES = ["a4", "letter"] as const;
 

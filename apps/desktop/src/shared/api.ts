@@ -9,6 +9,28 @@ export const PALETTE_CHANNEL = "palette";
 /** Main → renderer: menu commands and other things the window should react to. */
 export const COMMAND_CHANNEL = "command";
 
+/** Renderer → main: start an assistant reply; main → renderer: its stream; renderer → main: stop it. */
+export const ASSISTANT_SEND_CHANNEL = "assistant:send";
+export const ASSISTANT_STREAM_CHANNEL = "assistant:stream";
+export const ASSISTANT_ABORT_CHANNEL = "assistant:abort";
+
+/** What's on screen when a message is sent, so "this invoice" means something. */
+export type AssistantScreen = { type: "invoice" | "client"; id: string } | null;
+
+export interface AssistantRequest {
+	requestId: string;
+	chatId: string;
+	/** The whole conversation as AI SDK UI messages, ending with the new message. */
+	messages: unknown[];
+	screen: AssistantScreen;
+}
+
+/** One event of a reply: a UI message chunk, the end, or why it failed. */
+export type AssistantStreamEvent =
+	| { requestId: string; type: "chunk"; chunk: unknown }
+	| { requestId: string; type: "end" }
+	| { requestId: string; type: "error"; message: string };
+
 /** Places the native menu can take the user to. */
 export const ROUTES = {
 	dashboard: "/",
@@ -26,6 +48,8 @@ export type AppCommand =
 	| { type: "palette" }
 	| { type: "shortcuts" }
 	| { type: "invoice.new" }
+	/** Toggle the assistant panel (⌘J or the View menu). */
+	| { type: "assistant.toggle" }
 	| { type: "client.new" }
 	| { type: "backup.now" }
 	| { type: "backup.export" }
@@ -45,6 +69,8 @@ export interface DesktopApi {
 	palette: string;
 	/** Low-level call into the main process; use the typed `rpc` helper in the renderer instead. */
 	invoke(channel: string, input: unknown): Promise<RpcResult<unknown>>;
+	/** Streams an assistant reply; returns a function that stops it. */
+	assistant(request: AssistantRequest, listener: (event: AssistantStreamEvent) => void): () => void;
 	/** Listens for commands from the main process; returns a function that stops listening. */
 	onCommand(listener: (command: AppCommand) => void): () => void;
 }

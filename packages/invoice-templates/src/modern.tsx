@@ -1,5 +1,15 @@
 import { date, money } from "./format";
-import { Closing, ItemsTable, Logo, Party, placeholderFor, Sheet, Totals } from "./parts";
+import {
+	accentInk,
+	Closing,
+	ItemsTable,
+	Logo,
+	onAccent,
+	Party,
+	placeholderFor,
+	Sheet,
+	Totals,
+} from "./parts";
 import type { TemplateProps } from "./types";
 
 /** A bold accent bar, the amount due up top in a coloured block, tinted table header. */
@@ -39,8 +49,8 @@ export function ModernTemplate({
 				</header>
 
 				<section
-					className="mt-10 grid grid-cols-3 gap-6 rounded-xl px-7 py-6 text-white"
-					style={{ backgroundColor: accent }}
+					className="mt-10 grid grid-cols-3 gap-6 rounded-xl px-7 py-6"
+					style={{ backgroundColor: accent, color: onAccent(accent) }}
 				>
 					<div>
 						<div className="text-[11px] tracking-wider uppercase opacity-75">Amount due</div>
@@ -68,7 +78,7 @@ export function ModernTemplate({
 						invoice={invoice}
 						draft={draft}
 						headClassName=""
-						headStyle={{ backgroundColor: `${accent}14`, color: accent }}
+						headStyle={{ backgroundColor: `${accent}14`, color: accentInk(accent) }}
 					/>
 				</div>
 				<section className="mt-6 flex justify-end">

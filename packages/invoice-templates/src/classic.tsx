@@ -1,4 +1,14 @@
-import { Closing, Dates, ItemsTable, Logo, Party, placeholderFor, Sheet, Totals } from "./parts";
+import {
+	accentInk,
+	Closing,
+	Dates,
+	ItemsTable,
+	Logo,
+	Party,
+	placeholderFor,
+	Sheet,
+	Totals,
+} from "./parts";
 import type { TemplateProps } from "./types";
 
 /**
@@ -25,7 +35,7 @@ export function ClassicTemplate({
 				<div className={branding.logoPosition === "right" ? "text-left" : "text-right"}>
 					<div
 						className="text-[28px] leading-none font-semibold tracking-tight"
-						style={{ color: accent }}
+						style={{ color: accentInk(accent) }}
 					>
 						Invoice
 					</div>

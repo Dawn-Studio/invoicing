@@ -19,8 +19,11 @@ import {
 	FileClock,
 	GitBranch,
 	LayoutGrid,
+	Monitor,
 	MonitorPlay,
+	Moon,
 	Sparkles,
+	Sun,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -30,18 +33,23 @@ import {
 	type Palette,
 	setPalette,
 } from "../lib/palette";
+import { currentTheme, onThemeChange, setTheme, THEMES, type Theme } from "../lib/theme";
 import { SITE } from "../site";
 
+const THEME_ICONS = { system: Monitor, light: Sun, dark: Moon } as const;
+
 /**
- * ⌘K on the website, like in the app: jump to a section or page, or try a colour palette.
+ * ⌘K on the website, like in the app: jump to a section or page, or try a theme or palette.
  * Opens with ⌘K / Ctrl+K, or any element with `data-open-command`.
  */
 export function SiteCommand() {
 	const [open, setOpen] = useState(false);
 	const [palette, setCurrent] = useState<Palette>("lime");
+	const [theme, setCurrentTheme] = useState<Theme>("system");
 
 	useEffect(() => {
 		setCurrent(currentPalette());
+		setCurrentTheme(currentTheme());
 		const onKey = (event: KeyboardEvent) => {
 			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
 				event.preventDefault();
@@ -56,7 +64,9 @@ export function SiteCommand() {
 		document.addEventListener("click", onClick);
 		window.addEventListener("open-command", onOpen);
 		const stop = onPaletteChange(setCurrent);
+		const stopTheme = onThemeChange(setCurrentTheme);
 		return () => {
+			stopTheme();
 			window.removeEventListener("keydown", onKey);
 			document.removeEventListener("click", onClick);
 			window.removeEventListener("open-command", onOpen);
@@ -86,7 +96,7 @@ export function SiteCommand() {
 			>
 				<DialogTitle className="sr-only">Command menu</DialogTitle>
 				<DialogDescription className="sr-only">
-					Jump around the site or try a palette
+					Jump around the site or try a theme or palette
 				</DialogDescription>
 				<Command loop className="rounded-none">
 					<CommandInput placeholder="Type a command or search…" className="h-12 text-[0.9375rem]" />
@@ -100,6 +110,22 @@ export function SiteCommand() {
 									{href.startsWith("http") ? <ArrowUpRight className="opacity-60" /> : null}
 								</CommandItem>
 							))}
+						</CommandGroup>
+						<CommandGroup heading="Appearance">
+							{THEMES.map(({ value, label }) => {
+								const Icon = THEME_ICONS[value];
+								return (
+									<CommandItem
+										key={value}
+										value={`${label} ${value} theme appearance mode`}
+										onSelect={() => setTheme(value)}
+									>
+										<Icon />
+										<span className="flex-1">{label}</span>
+										{theme === value ? <Check className="text-brand-ink" /> : null}
+									</CommandItem>
+								);
+							})}
 						</CommandGroup>
 						<CommandGroup heading="Colour palette">
 							{PALETTES.map(({ value, label }) => (

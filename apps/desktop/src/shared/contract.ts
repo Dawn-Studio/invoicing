@@ -133,6 +133,90 @@ export interface WorkspaceList {
 
 const workspaceName = z.string().trim().min(1, "Name is required").max(60);
 
+/** Where the assistant's model runs: the user's OpenRouter account or their ChatGPT plan. */
+export const ASSISTANT_PROVIDERS = ["openrouter", "chatgpt"] as const;
+export type AssistantProvider = (typeof ASSISTANT_PROVIDERS)[number];
+
+export interface AssistantModel {
+	id: string;
+	name: string;
+	/** Accepts images. */
+	images: boolean;
+	/** Accepts PDFs and other files. */
+	files: boolean;
+	contextLength: number | null;
+	/** USD per million tokens; null when the provider doesn't say (ChatGPT plan). */
+	price: { input: number; output: number } | null;
+}
+
+/** Everything the settings and the panel need to know about the assistant on this computer. */
+export interface AssistantStatus {
+	/** The provider new messages go to. */
+	provider: AssistantProvider;
+	/** The active provider is connected, so the assistant can be used. */
+	ready: boolean;
+	/** Switched on for the open workspace. */
+	enabled: boolean;
+	/** The user has seen what gets sent where. */
+	acknowledged: boolean;
+	/** The model new messages use (the active provider's pick or default). */
+	model: string | null;
+	openrouter: { connected: boolean; via: "oauth" | "key" | null; model: string };
+	chatgpt: {
+		connected: boolean;
+		email: string | null;
+		/** The sign-in allows using the ChatGPT plan for requests. */
+		planUsage: boolean;
+		model: string | null;
+	};
+}
+
+/** The connected OpenRouter key's spend, in USD. */
+export interface OpenRouterUsage {
+	label: string;
+	usage: number;
+	limit: number | null;
+	remaining: number | null;
+	freeTier: boolean;
+}
+
+/** A file attached to a message, stored in the app's attachment folder. */
+export interface AssistantAttachment {
+	id: string;
+	filename: string;
+	mediaType: string;
+	size: number;
+	/** `attachment:<id>`; what the message's file part points at. */
+	url: string;
+}
+
+export const MENTION_TYPES = ["client", "invoice", "item"] as const;
+export type MentionType = (typeof MENTION_TYPES)[number];
+
+/** A record the user @-mentioned; its current data goes to the model with the message. */
+export interface Mention {
+	type: MentionType;
+	id: string;
+	label: string;
+	detail?: string;
+}
+
+export interface AssistantChatSummary {
+	id: string;
+	title: string;
+	createdAt: number;
+	updatedAt: number;
+}
+
+const mentionSchema = z.object({
+	type: z.enum(MENTION_TYPES),
+	id: idSchema,
+	label: z.string().max(300),
+	detail: z.string().max(300).optional(),
+});
+
+export { mentionSchema };
+
 export const contract = {
 	"app.info": { input: z.void(), output: returns<AppInfo>() },
 	"preferences.theme": { input: z.void(), output: returns<Theme>() },
@@ -362,6 +446,71 @@ export const contract = {
 	"backups.discard": { input: z.object({ token: z.string().max(100) }), output: returns<void>() },
 	/** Opens the app's data folder (databases, logos, backups) in Finder / Explorer. */
 	"app.showDataFolder": { input: z.void(), output: returns<void>() },
+	"assistant.status": { input: z.void(), output: returns<AssistantStatus>() },
+	/** Opens OpenRouter in the browser and waits for the user to connect. */
+	"assistant.connectOpenRouter": { input: z.void(), output: returns<AssistantStatus>() },
+	"assistant.setOpenRouterKey": {
+		input: z.object({ key: z.string().trim().min(10, "Paste your OpenRouter key").max(300) }),
+		output: returns<AssistantStatus>(),
+	},
+	"assistant.openRouterUsage": { input: z.void(), output: returns<OpenRouterUsage | null>() },
+	/** Opens "Sign in with ChatGPT" in the browser and waits. */
+	"assistant.connectChatGpt": { input: z.void(), output: returns<AssistantStatus>() },
+	/** Stops a browser sign-in that's still waiting. */
+	"assistant.cancelSignIn": { input: z.void(), output: returns<void>() },
+	"assistant.disconnect": {
+		input: z.object({ provider: z.enum(ASSISTANT_PROVIDERS) }),
+		output: returns<AssistantStatus>(),
+	},
+	"assistant.setProvider": {
+		input: z.object({ provider: z.enum(ASSISTANT_PROVIDERS) }),
+		output: returns<AssistantStatus>(),
+	},
+	"assistant.models": {
+		input: z.object({ provider: z.enum(ASSISTANT_PROVIDERS) }),
+		output: returns<AssistantModel[]>(),
+	},
+	"assistant.setModel": {
+		input: z.object({ provider: z.enum(ASSISTANT_PROVIDERS), model: z.string().min(1).max(200) }),
+		output: returns<AssistantStatus>(),
+	},
+	/** Turns the assistant on or off for the open workspace. */
+	"assistant.setEnabled": {
+		input: z.object({ enabled: z.boolean() }),
+		output: returns<AssistantStatus>(),
+	},
+	"assistant.acknowledge": { input: z.void(), output: returns<AssistantStatus>() },
+	"assistant.chats": { input: z.void(), output: returns<AssistantChatSummary[]>() },
+	/** A conversation's messages (AI SDK UI messages). */
+	"assistant.chat": {
+		input: byId,
+		output: returns<{ id: string; title: string; messages: unknown[] } | null>(),
+	},
+	"assistant.renameChat": {
+		input: byId.extend({ title: z.string().trim().min(1).max(120) }),
+		output: returns<void>(),
+	},
+	"assistant.deleteChat": { input: byId, output: returns<void>() },
+	"assistant.deleteChats": { input: z.void(), output: returns<void>() },
+	/** Stores a file the user attached; `data` is base64. */
+	"assistant.saveAttachment": {
+		input: z.object({
+			filename: z.string().trim().min(1).max(255),
+			mediaType: z.string().max(120),
+			data: z.base64().max(28_000_000, "Files can be up to 20 MB"),
+		}),
+		output: returns<AssistantAttachment>(),
+	},
+	/** An attachment as a data URL, for previews. */
+	"assistant.attachment": {
+		input: z.object({ id: z.string().max(80) }),
+		output: returns<string | null>(),
+	},
+	/** Records for the @ menu. */
+	"assistant.mentions": {
+		input: z.object({ search: z.string().max(200).optional() }),
+		output: returns<Mention[]>(),
+	},
 	"invoices.void": {
 		input: byId.extend({ reason: z.string().max(500).optional() }),
 		output: returns<Invoice>(),

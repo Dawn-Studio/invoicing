@@ -1,4 +1,11 @@
+import { formatMoney } from "@dawnstudio/core";
 import { app, shell } from "electron";
+import type { Mention } from "../shared/contract";
+import type { Assistant } from "./assistant";
+import { attachmentDataUrl, saveAttachment } from "./assistant/attachments";
+import { loadCredentials } from "./assistant/credentials";
+import { cancelSignIn } from "./assistant/loopback";
+import { openRouterUsage } from "./assistant/openrouter";
 import {
 	askBackupDestination,
 	askBackupFile,
@@ -27,7 +34,11 @@ import type { WorkspaceManager } from "./workspaces";
 
 export function createHandlers(
 	workspaces: WorkspaceManager,
-	{ onThemeChanged, updates }: { onThemeChanged: () => void; updates: Updates },
+	{
+		onThemeChanged,
+		updates,
+		assistant,
+	}: { onThemeChanged: () => void; updates: Updates; assistant: Assistant },
 ): Handlers {
 	// Always the open workspace's repositories; switching workspaces replaces them.
 	const repos = () => workspaces.repos;
@@ -157,5 +168,66 @@ export function createHandlers(
 			if (error) throw new Error(error);
 		},
 		"invoices.void": ({ id, reason }) => repos().invoices.void(id, reason),
+
+		"assistant.status": () => assistant.status(),
+		"assistant.connectOpenRouter": () => assistant.connect("openrouter"),
+		"assistant.setOpenRouterKey": ({ key }) => assistant.connect("openrouter", key),
+		"assistant.openRouterUsage": async () => {
+			await loadCredentials();
+			return openRouterUsage();
+		},
+		"assistant.connectChatGpt": () => assistant.connect("chatgpt"),
+		"assistant.cancelSignIn": () => cancelSignIn(),
+		"assistant.disconnect": ({ provider }) => assistant.disconnect(provider),
+		"assistant.setProvider": ({ provider }) => assistant.setProvider(provider),
+		"assistant.models": ({ provider }) => assistant.models(provider),
+		"assistant.setModel": ({ provider, model }) => assistant.setModel(provider, model),
+		"assistant.setEnabled": ({ enabled }) => assistant.setEnabled(enabled),
+		"assistant.acknowledge": () => assistant.acknowledge(),
+		"assistant.chats": () => repos().assistantChats.list(),
+		"assistant.chat": ({ id }) => {
+			const chat = repos().assistantChats.find(id);
+			return chat ? { id: chat.id, title: chat.title, messages: chat.messages } : null;
+		},
+		"assistant.renameChat": ({ id, title }) => {
+			repos().assistantChats.rename(id, title);
+		},
+		"assistant.deleteChat": ({ id }) => repos().assistantChats.delete(id),
+		"assistant.deleteChats": () => repos().assistantChats.deleteAll(),
+		"assistant.saveAttachment": (input) => saveAttachment(input),
+		"assistant.attachment": ({ id }) => attachmentDataUrl(id),
+		"assistant.mentions": ({ search }) => {
+			const term = search?.trim() || undefined;
+			const clients: Mention[] = repos()
+				.clients.list({ search: term })
+				.slice(0, 6)
+				.map((client) => ({
+					type: "client",
+					id: client.id,
+					label: client.name,
+					detail: client.email || undefined,
+				}));
+			const invoices: Mention[] = repos()
+				.invoices.list({ search: term })
+				.slice(0, 6)
+				.map((invoice) => ({
+					type: "invoice",
+					id: invoice.id,
+					label: invoice.number ?? "Draft",
+					detail: [invoice.clientName, formatMoney(invoice.total, invoice.currency)]
+						.filter(Boolean)
+						.join(" · "),
+				}));
+			const items: Mention[] = repos()
+				.catalog.list({ search: term })
+				.slice(0, 6)
+				.map((item) => ({
+					type: "item",
+					id: item.id,
+					label: item.description,
+					detail: formatMoney(item.unitPrice, item.currency),
+				}));
+			return [...clients, ...invoices, ...items];
+		},
 	};
 }

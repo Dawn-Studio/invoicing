@@ -83,3 +83,13 @@ html {
 		background-color 0.4s ease,
 		color 0.4s ease;
 }
+
+/* The big soft shadow under the app windows: deep on dark, a light lift on white. */
+@utility shadow-window {
+	box-shadow:
+		0 1px 2px rgb(20 23 16 / 0.04),
+		0 40px 90px -40px rgb(20 23 16 / 0.28);
+	@variant dark {
+		box-shadow: 0 40px 100px -30px rgb(0 0 0 / 0.9);
+	}
+}

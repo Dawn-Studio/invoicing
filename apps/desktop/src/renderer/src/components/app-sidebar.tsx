@@ -21,6 +21,7 @@ import {
 	type LucideIcon,
 	Package,
 	Settings,
+	Sparkles,
 	SquarePen,
 	Users,
 } from "lucide-react";
@@ -33,6 +34,7 @@ import { SETTINGS_SECTIONS, type SettingsGroup } from "../features/settings/sect
 import { SidebarUpdateNotice } from "../features/updates/update-notice";
 import { WorkspaceAvatar } from "../features/workspaces/workspace-avatar";
 import { WorkspaceSwitcher } from "../features/workspaces/workspace-switcher";
+import { assistantPanel } from "../lib/assistant";
 import { useWorkspaces } from "../lib/queries";
 import { Shortcut } from "./shortcut";
 
@@ -60,7 +62,7 @@ function NavItem({ to, label, icon: Icon }: NavEntry) {
 			<SidebarMenuButton
 				asChild
 				isActive={active}
-				className="relative h-7 gap-2.5 px-2 text-[0.9375rem] text-sidebar-foreground/85 data-[active=true]:bg-primary/15 data-[active=true]:font-medium dark:data-[active=true]:bg-primary/10 [&>svg]:text-muted-foreground data-[active=true]:[&>svg]:text-brand-ink"
+				className="relative h-9 gap-2.5 px-2.5 text-[0.9375rem] text-sidebar-foreground/85 data-[active=true]:bg-primary/15 data-[active=true]:font-medium dark:data-[active=true]:bg-primary/10 [&>svg]:text-muted-foreground data-[active=true]:[&>svg]:text-brand-ink"
 			>
 				<NavLink to={to}>
 					<Icon />
@@ -88,7 +90,7 @@ export function AppSidebar() {
 	return (
 		<Sidebar variant="inset" className="border-r-0">
 			{/* Room for the macOS traffic lights; the strip also drags the window. */}
-			<div className="app-drag h-7 shrink-0 in-data-[platform=darwin]:h-9" />
+			<div className="app-drag h-7 shrink-0 in-data-[platform=darwin]:h-12" />
 			<AnimatePresence mode="popLayout" initial={false}>
 				<motion.div
 					key={inSettings ? "settings" : "app"}
@@ -119,8 +121,24 @@ function MainNav() {
 						<Button
 							variant="ghost"
 							size="icon-sm"
+							aria-label="Assistant"
+							className="app-no-drag size-8 text-muted-foreground hover:text-foreground"
+							onClick={assistantPanel.toggle}
+						>
+							<Sparkles />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="right" className="flex items-center gap-2">
+						Assistant <Shortcut hotkey={hotkeys["assistant.toggle"].hotkey} />
+					</TooltipContent>
+				</Tooltip>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="icon-sm"
 							aria-label="New invoice"
-							className="app-no-drag size-7 text-muted-foreground hover:text-foreground"
+							className="app-no-drag size-8 text-muted-foreground hover:text-foreground"
 							disabled={start.isPending}
 							onClick={() => start.run()}
 						>
@@ -135,7 +153,7 @@ function MainNav() {
 			<SidebarContent className="gap-0">
 				<SidebarGroup className="py-1">
 					<SidebarGroupContent>
-						<SidebarMenu className="gap-px">
+						<SidebarMenu className="gap-0.5">
 							{overview.map((item) => (
 								<NavItem key={item.to} {...item} />
 							))}
@@ -147,7 +165,7 @@ function MainNav() {
 						Billing
 					</SidebarGroupLabel>
 					<SidebarGroupContent>
-						<SidebarMenu className="gap-px">
+						<SidebarMenu className="gap-0.5">
 							{billing.map((item) => (
 								<NavItem key={item.to} {...item} />
 							))}
@@ -224,7 +242,7 @@ function SettingsNav() {
 							{label}
 						</SidebarGroupLabel>
 						<SidebarGroupContent>
-							<SidebarMenu className="gap-px">
+							<SidebarMenu className="gap-0.5">
 								{SETTINGS_SECTIONS.filter((section) => section.group === group).map((section) => (
 									<NavItem
 										key={section.id}

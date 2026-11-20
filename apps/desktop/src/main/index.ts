@@ -11,6 +11,7 @@ import {
 	shell,
 } from "electron";
 import { type AppCommand, COMMAND_CHANNEL, PALETTE_CHANNEL } from "../shared/api";
+import { Assistant } from "./assistant";
 import { discardAllStaged } from "./backups";
 import { createHandlers } from "./handlers";
 import { installMenu } from "./menu";
@@ -166,7 +167,9 @@ app.whenReady().then(() => {
 		openWindow: createWindow,
 		checkForUpdates: () => void updates.check(),
 	});
-	registerRpc(createHandlers(workspaces, { onThemeChanged: refreshMenu, updates }));
+	const assistant = new Assistant(workspaces);
+	assistant.register();
+	registerRpc(createHandlers(workspaces, { onThemeChanged: refreshMenu, updates, assistant }));
 	createWindow();
 	updates.start();
 

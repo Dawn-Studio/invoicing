@@ -8,6 +8,7 @@ import { defineAppHotkeys } from "@tanstack/react-hotkeys";
 export const appHotkeys = defineAppHotkeys({
 	"invoice.new": { hotkey: "C", meta: { name: "New invoice", group: "General" } },
 	"palette.open": { hotkey: "Mod+K", meta: { name: "Command palette", group: "General" } },
+	"assistant.toggle": { hotkey: "Mod+J", meta: { name: "Assistant", group: "General" } },
 	"help.shortcuts": { hotkey: "?", meta: { name: "Keyboard shortcuts", group: "General" } },
 	"nav.dashboard": { hotkey: ["G", "D"], meta: { name: "Go to Dashboard", group: "Navigation" } },
 	"nav.invoices": { hotkey: ["G", "I"], meta: { name: "Go to Invoices", group: "Navigation" } },

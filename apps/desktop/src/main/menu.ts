@@ -131,6 +131,11 @@ export function installMenu({ window, openWindow, checkForUpdates }: MenuOptions
 						accelerator: "CmdOrCtrl+K",
 						click: () => send({ type: "palette" }),
 					},
+					{
+						label: "Assistant",
+						accelerator: "CmdOrCtrl+J",
+						click: () => send({ type: "assistant.toggle" }),
+					},
 					{ type: "separator" },
 					{
 						label: "Appearance",

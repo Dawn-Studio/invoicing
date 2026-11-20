@@ -14,6 +14,7 @@ import { type AppCommand, ROUTES } from "../../../shared/api";
 import { useStartInvoice } from "../features/invoices/use-start-invoice";
 import { useBackupActions } from "../features/settings/data-panel";
 import { UpdateToasts } from "../features/updates/update-notice";
+import { assistantPanel } from "../lib/assistant";
 import { CommandPalette } from "./command-palette";
 import { Shortcut } from "./shortcut";
 
@@ -38,6 +39,7 @@ export function GlobalHotkeys() {
 	useHotkey(hotkeys["invoice.new"], startInvoice, { enabled: !start.isPending });
 	useHotkey(hotkeys["help.shortcuts"], () => setSheetOpen(true));
 	useHotkey(hotkeys["palette.open"], () => setPaletteOpen(true));
+	useHotkey(hotkeys["assistant.toggle"], assistantPanel.toggle);
 	useHotkey(hotkeys["nav.dashboard"], () => navigate("/"));
 	useHotkey(hotkeys["nav.invoices"], () => navigate("/invoices"));
 	useHotkey(hotkeys["nav.clients"], () => navigate("/clients"));
@@ -53,6 +55,8 @@ export function GlobalHotkeys() {
 				return navigate(ROUTES[command.to]);
 			case "palette":
 				return setPaletteOpen(true);
+			case "assistant.toggle":
+				return assistantPanel.toggle();
 			case "shortcuts":
 				return setSheetOpen(true);
 			case "invoice.new":

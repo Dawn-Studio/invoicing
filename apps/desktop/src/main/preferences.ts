@@ -2,11 +2,11 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { app, nativeTheme } from "electron";
 import { z } from "zod";
-import { PALETTES, type Palette, type Theme } from "../shared/contract";
+import { ASSISTANT_PROVIDERS, PALETTES, type Palette, type Theme } from "../shared/contract";
 
 /**
- * App-wide preferences that belong to this computer rather than to a workspace: the theme and
- * where the window was. Kept in `userData/preferences.json`; a missing or broken file means
+ * App-wide preferences that belong to this computer rather than to a workspace: the theme,
+ * where the window was, and the assistant's provider and models. Kept in `userData/preferences.json`; a missing or broken file means
  * defaults.
  */
 
@@ -19,10 +19,30 @@ const boundsSchema = z.object({
 });
 export type WindowBounds = z.infer<typeof boundsSchema>;
 
+const assistantSchema = z.object({
+	provider: z.enum(ASSISTANT_PROVIDERS).catch("openrouter"),
+	/** The model picked per provider; null = that provider's default. */
+	models: z
+		.object({
+			openrouter: z.string().max(200).nullable().catch(null),
+			chatgpt: z.string().max(200).nullable().catch(null),
+		})
+		.catch({ openrouter: null, chatgpt: null }),
+	/** Saw the "what gets sent where" note. */
+	acknowledged: z.boolean().catch(false),
+});
+export type AssistantPreferences = z.infer<typeof assistantSchema>;
+const defaultAssistant: AssistantPreferences = {
+	provider: "openrouter",
+	models: { openrouter: null, chatgpt: null },
+	acknowledged: false,
+};
+
 const preferencesSchema = z.object({
 	theme: z.enum(["system", "light", "dark"]).catch("system"),
 	palette: z.enum(PALETTES).catch("lime"),
 	window: boundsSchema.nullable().catch(null),
+	assistant: assistantSchema.catch(defaultAssistant),
 });
 type Preferences = z.infer<typeof preferencesSchema>;
 
@@ -35,7 +55,7 @@ function read(): Preferences {
 	try {
 		cache = preferencesSchema.parse(JSON.parse(readFileSync(file(), "utf8")));
 	} catch {
-		cache = { theme: "system", palette: "lime", window: null };
+		cache = { theme: "system", palette: "lime", window: null, assistant: defaultAssistant };
 	}
 	return cache;
 }
@@ -68,3 +88,8 @@ export function setPalette(palette: Palette) {
 
 export const getWindowBounds = () => read().window;
 export const saveWindowBounds = (window: WindowBounds) => write({ window });
+
+export const getAssistantPreferences = () => read().assistant;
+export function setAssistantPreferences(patch: Partial<AssistantPreferences>) {
+	write({ assistant: { ...read().assistant, ...patch } });
+}

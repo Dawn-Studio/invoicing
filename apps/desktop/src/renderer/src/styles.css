@@ -42,3 +42,15 @@ html.printing #root {
 		break-inside: avoid;
 	}
 }
+
+/* While a panel edge is dragged: one cursor everywhere, no text selection, and no width
+   transitions, so the panels follow the pointer exactly. Unlayered, so it wins over utilities. */
+html.resizing,
+html.resizing * {
+	cursor: col-resize;
+	user-select: none;
+}
+html.resizing [data-slot="sidebar-gap"],
+html.resizing [data-slot="sidebar-container"] {
+	transition: none;
+}

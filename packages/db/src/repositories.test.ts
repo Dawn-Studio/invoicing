@@ -668,3 +668,24 @@ describe("reports", () => {
 		]);
 	});
 });
+
+describe("assistant chats", () => {
+	it("saves, keeps the first title, lists newest first and deletes", () => {
+		repos.assistantChats.save("a", { title: "First", messages: [{ id: "m1" }] });
+		repos.assistantChats.save("b", { title: "Second", messages: [] });
+		repos.assistantChats.save("a", { title: "Ignored", messages: [{ id: "m1" }, { id: "m2" }] });
+
+		expect(repos.assistantChats.list().map((c) => c.id)).toEqual(["a", "b"]);
+		const chat = repos.assistantChats.get("a");
+		expect(chat.title).toBe("First");
+		expect(chat.messages).toHaveLength(2);
+
+		repos.assistantChats.rename("a", "Renamed");
+		expect(repos.assistantChats.get("a").title).toBe("Renamed");
+
+		repos.assistantChats.delete("a");
+		expect(repos.assistantChats.find("a")).toBeNull();
+		repos.assistantChats.deleteAll();
+		expect(repos.assistantChats.list()).toEqual([]);
+	});
+});

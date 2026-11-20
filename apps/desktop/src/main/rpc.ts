@@ -15,7 +15,7 @@ export type Handlers = {
 };
 
 /** Only our own renderer may call in: the dev server in development, the bundled file otherwise. */
-function isTrustedSender(event: IpcMainInvokeEvent): boolean {
+export function isTrustedSender(event: Pick<IpcMainInvokeEvent, "senderFrame">): boolean {
 	const url = event.senderFrame?.url ?? "";
 	const devServerUrl = process.env.ELECTRON_RENDERER_URL;
 	if (!app.isPackaged && devServerUrl && url.startsWith(devServerUrl)) return true;

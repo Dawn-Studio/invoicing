@@ -46,6 +46,7 @@ import { ProfileForm, type ProfileSection } from "../profile/profile-form";
 import { AboutPanel } from "../updates/about-panel";
 import { WorkspacePanel } from "../workspaces/workspace-panel";
 import { PalettePanel, ThemePanel } from "./appearance-panel";
+import { AssistantSettings } from "./assistant-settings";
 import { BrandingPanel } from "./branding-panel";
 import { DataPanel } from "./data-panel";
 import { EmailPanel } from "./email-panel";
@@ -137,6 +138,12 @@ function SectionContent({ id }: { id: SettingsSectionId }) {
 						<PalettePanel />
 					</PageSection>
 				</>
+			);
+		case "assistant":
+			return (
+				<PageSection className="flex flex-col gap-5">
+					<AssistantSettings />
+				</PageSection>
 			);
 		case "shortcuts":
 			return (

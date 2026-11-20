@@ -4,20 +4,28 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useVisible } from "./shared";
 
-export interface TourShot {
-	id: string;
-	label: string;
-	caption: string;
+interface Screenshot {
 	src: string;
 	srcSet: string;
 	width: number;
 	height: number;
+}
+
+export interface TourShot {
+	id: string;
+	label: string;
+	caption: string;
+	light: Screenshot;
+	dark: Screenshot;
 	alt: string;
 }
 
 const ADVANCE_MS = 5500;
 
-/** Real screenshots of the app, one tab each, advancing on their own until you pick one. */
+/**
+ * Real screenshots of the app, one tab each, advancing on their own until you pick one. Both
+ * themes are in the markup and CSS shows the site's, so the hidden one never downloads.
+ */
 export function Tour({ shots }: { shots: TourShot[] }) {
 	const ref = useRef<HTMLDivElement>(null);
 	const visible = useVisible(ref);
@@ -73,25 +81,38 @@ export function Tour({ shots }: { shots: TourShot[] }) {
 					</button>
 				))}
 			</div>
-			<div className="relative overflow-hidden rounded-xl border bg-card shadow-[0_50px_120px_-40px_rgb(0_0_0/0.95)]">
-				<div className="relative" style={{ aspectRatio: `${shot.width} / ${shot.height}` }}>
+			<div className="relative overflow-hidden rounded-xl border bg-card shadow-window">
+				<div
+					className="relative"
+					style={{ aspectRatio: `${shot.dark.width} / ${shot.dark.height}` }}
+				>
 					<AnimatePresence initial={false} mode="popLayout">
-						<motion.img
+						<motion.div
 							key={shot.id}
-							src={shot.src}
-							srcSet={shot.srcSet}
-							sizes="(min-width: 1200px) 1150px, 100vw"
-							alt={shot.alt}
-							width={shot.width}
-							height={shot.height}
-							loading="lazy"
-							decoding="async"
 							initial={{ opacity: 0, scale: 1.02, filter: "blur(8px)" }}
 							animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
 							exit={{ opacity: 0 }}
 							transition={transitions.smooth}
-							className="absolute inset-0 size-full object-cover object-top"
-						/>
+							className="absolute inset-0"
+						>
+							{(["light", "dark"] as const).map((mode) => (
+								<img
+									key={mode}
+									src={shot[mode].src}
+									srcSet={shot[mode].srcSet}
+									sizes="(min-width: 1200px) 1150px, 100vw"
+									alt={shot.alt}
+									width={shot[mode].width}
+									height={shot[mode].height}
+									loading="lazy"
+									decoding="async"
+									className={cn(
+										"size-full object-cover object-top",
+										mode === "light" ? "dark:hidden" : "hidden dark:block",
+									)}
+								/>
+							))}
+						</motion.div>
 					</AnimatePresence>
 					{/* macOS traffic lights where the window draws them. */}
 					{["1.26%", "2.83%", "4.40%"].map((left, i) => (

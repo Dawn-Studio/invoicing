@@ -25,7 +25,7 @@ import { Spinner } from "@dawnstudio/ui/components/spinner";
 import { Textarea } from "@dawnstudio/ui/components/textarea";
 import { cn } from "@dawnstudio/ui/lib/utils";
 import { Check } from "lucide-react";
-import { type ReactNode, useId, useMemo, useState } from "react";
+import { type ReactNode, useDeferredValue, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { showSaveError } from "../../lib/forms";
 import { useLogo, usePaymentAccounts, useRpcMutation } from "../../lib/queries";
@@ -107,6 +107,8 @@ export function BrandingPanel({ profile }: { profile: BusinessProfile }) {
 	const validColor = /^#[0-9a-fA-F]{6}$/.test(branding.accentColor);
 	const account = accounts.find((a) => a.isDefault) ?? accounts[0] ?? null;
 
+	// Fifteen live previews: let them catch up after typing or dragging the colour picker.
+	const shown = useDeferredValue(branding);
 	const samples = useMemo(
 		() =>
 			TEMPLATES.map((template) => ({
@@ -114,14 +116,16 @@ export function BrandingPanel({ profile }: { profile: BusinessProfile }) {
 				invoice: sampleInvoice(
 					profile,
 					{
-						...branding,
+						...shown,
 						template,
-						accentColor: validColor ? branding.accentColor : profile.branding.accentColor,
+						accentColor: /^#[0-9a-fA-F]{6}$/.test(shown.accentColor)
+							? shown.accentColor
+							: profile.branding.accentColor,
 					},
 					account,
 				),
 			})),
-		[profile, branding, validColor, account],
+		[profile, shown, account],
 	);
 
 	const onSave = async () => {
@@ -143,8 +147,11 @@ export function BrandingPanel({ profile }: { profile: BusinessProfile }) {
 			</PanelHeader>
 			<PanelBody className="flex flex-col gap-6">
 				<div className="flex flex-col gap-3">
-					<span className="text-sm font-medium">Template</span>
-					<div className="grid grid-cols-3 gap-4">
+					<div className="flex items-baseline justify-between gap-4">
+						<span className="text-sm font-medium">Template</span>
+						<span className="text-sm text-muted-foreground">{templates[branding.template as keyof typeof templates]?.description}</span>
+					</div>
+					<div className="grid grid-cols-3 gap-x-4 gap-y-5">
 						{samples.map(({ template, invoice }) => {
 							const selected = branding.template === template;
 							return (
@@ -167,8 +174,8 @@ export function BrandingPanel({ profile }: { profile: BusinessProfile }) {
 											className="pointer-events-none"
 										/>
 									</div>
-									<span className="flex items-center gap-1.5 text-sm">
-										{selected ? <Check className="size-3.5" /> : null}
+									<span className="flex items-center gap-1.5 text-sm" title={templates[template].description}>
+										{selected ? <Check className="size-3.5 text-brand-ink" /> : null}
 										{templates[template].name}
 									</span>
 								</button>

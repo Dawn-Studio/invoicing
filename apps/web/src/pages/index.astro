@@ -21,10 +21,21 @@ const [latest] = (await getCollection("changelog")).sort((a, b) =>
 	b.data.version.localeCompare(a.data.version, undefined, { numeric: true }),
 );
 
-// Real screenshots (dark, like the site), optimised to WebP for the tour.
-const files = import.meta.glob<{ default: ImageMetadata }>("../assets/screenshots/*-dark.png", {
+// Real screenshots in light and dark (the tour shows the site's), optimised to WebP.
+const files = import.meta.glob<{ default: ImageMetadata }>("../assets/screenshots/*.png", {
 	eager: true,
 });
+async function screenshot(id: string, mode: "light" | "dark") {
+	const source = files[`../assets/screenshots/${id}-${mode}.png`]?.default;
+	if (!source) throw new Error(`Missing screenshot ${id}-${mode}.png`);
+	const image = await getImage({ src: source, widths: [960, 1600, 2546], format: "webp" });
+	return {
+		src: image.src,
+		srcSet: image.srcSet.attribute,
+		width: source.width,
+		height: source.height,
+	};
+}
 const tourShots = [
 	{
 		id: "dashboard",
@@ -54,19 +65,12 @@ const tourShots = [
 	},
 ];
 const shots: TourShot[] = await Promise.all(
-	tourShots.map(async (shot) => {
-		const source = files[`../assets/screenshots/${shot.id}-dark.png`]?.default;
-		if (!source) throw new Error(`Missing screenshot ${shot.id}-dark.png`);
-		const image = await getImage({ src: source, widths: [960, 1600, 2546], format: "webp" });
-		return {
-			...shot,
-			src: image.src,
-			srcSet: image.srcSet.attribute,
-			width: source.width,
-			height: source.height,
-			alt: `Invoicing: ${shot.caption}`,
-		};
-	}),
+	tourShots.map(async (shot) => ({
+		...shot,
+		light: await screenshot(shot.id, "light"),
+		dark: await screenshot(shot.id, "dark"),
+		alt: `Invoicing: ${shot.caption}`,
+	})),
 );
 
 const currencies = [
@@ -207,7 +211,7 @@ const jsonLd = {
 	<section id="palettes" class="mx-auto flex max-w-6xl scroll-mt-20 flex-col gap-12 px-5 py-28">
 		<SectionHeading number="06" label="Yours" title="Ten palettes. Go on, pick one.">
 			The app comes in light and dark and ten colour palettes. This site uses the same colours, so it
-			changes too.
+			changes too. Try dark with Violet.
 		</SectionHeading>
 		<PalettePicker client:visible />
 	</section>

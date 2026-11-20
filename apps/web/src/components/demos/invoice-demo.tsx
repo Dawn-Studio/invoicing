@@ -31,7 +31,7 @@ export function InvoiceDemo() {
 			<Window
 				title={status === "draft" ? "Draft · INV-2026-0058" : "INV-2026-0058"}
 				right={<StatusPill status={status} />}
-				bodyClassName="bg-background/40 p-4 sm:p-6"
+				bodyClassName="bg-secondary/70 p-4 sm:p-6 dark:bg-background/40"
 			>
 				{/* The printed page, like the app's live preview. */}
 				<div className="relative rounded-lg bg-white p-5 text-[#141710] shadow-xl sm:p-7">

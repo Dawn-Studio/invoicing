@@ -27,6 +27,7 @@ import {
 	Moon,
 	Package,
 	Settings,
+	Sparkles,
 	SquarePen,
 	Sun,
 	User,
@@ -39,6 +40,7 @@ import type { Theme } from "../../../shared/contract";
 import { displayStatus, StatusBadge } from "../features/invoices/invoice-row";
 import { useWorkspaceActions } from "../features/workspaces/use-workspace-actions";
 import { WorkspaceAvatar } from "../features/workspaces/workspace-avatar";
+import { assistantPanel } from "../lib/assistant";
 import { formatAmount } from "../lib/format";
 import { applyPalette, PALETTE_OPTIONS } from "../lib/palettes";
 import {
@@ -158,6 +160,15 @@ export function CommandPalette({
 		const others =
 			workspaces?.workspaces.filter((workspace) => workspace.id !== workspaces.activeId) ?? [];
 		return [
+			{
+				id: "assistant",
+				label: search ? `Ask the assistant: “${search}”` : "Ask the assistant…",
+				group: "Actions",
+				icon: icon(Sparkles),
+				keywords: `ai chat help draft ${search}`,
+				hotkey: hotkeys["assistant.toggle"].hotkey,
+				run: () => assistantPanel.show(search || undefined),
+			},
 			{
 				id: "new-invoice",
 				label: "New invoice",

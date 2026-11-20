@@ -1,5 +1,5 @@
 ---
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Moon, Star, Sun } from "lucide-react";
 import { SITE } from "../site";
 import Logo from "./logo.astro";
 
@@ -42,11 +42,32 @@ const links = [
 			>
 				<kbd class="font-sans">⌘K</kbd>
 			</button>
+			<button
+				type="button"
+				data-theme-toggle
+				class="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&_svg]:size-4"
+				aria-label="Switch between light and dark"
+				title="Switch between light and dark"
+			>
+				<span class="contents dark:hidden"><Sun /></span>
+				<span class="hidden dark:contents"><Moon /></span>
+			</button>
 			<a
 				href={`https://github.com/${SITE.repo}`}
-				class="hidden h-8 items-center rounded-md px-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground lg:inline-flex"
-				>GitHub</a
+				class="group hidden h-8 items-center gap-2 rounded-md px-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground lg:inline-flex"
+				aria-label="Invoicing on GitHub"
 			>
+				GitHub
+				<!-- Filled in by the script below once there are over 500 stars; hidden until then. -->
+				<span
+					data-github-stars
+					hidden
+					class="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs tabular-nums opacity-0 transition-opacity duration-500 [&_svg]:size-3 [&.loaded]:opacity-100"
+				>
+					<span class="contents transition-colors group-hover:text-brand-ink"><Star /></span>
+					<span data-github-stars-count></span>
+				</span>
+			</a>
 			<a
 				href="/download"
 				class="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-[filter] hover:brightness-110 [&_svg]:size-3.5"
@@ -68,6 +89,28 @@ const links = [
 </header>
 
 <script>
+	import { fetchStars, formatStars } from "../lib/github";
+	import { isDark, setTheme } from "../lib/theme";
+
+	// The star count next to the GitHub link, once there are enough to be worth showing.
+	const MIN_STARS = 500;
+	const stars = document.querySelector<HTMLElement>("[data-github-stars]");
+	if (stars) {
+		fetchStars().then((count) => {
+			if (count === null || count <= MIN_STARS) return;
+			const label = stars.querySelector("[data-github-stars-count]");
+			if (label) label.textContent = formatStars(count);
+			stars.title = `${count.toLocaleString("en")} stars on GitHub`;
+			stars.closest("a")?.setAttribute("aria-label", `Invoicing on GitHub, ${count} stars`);
+			stars.hidden = false;
+			requestAnimationFrame(() => stars.classList.add("loaded"));
+		});
+	}
+
+	document
+		.querySelector("[data-theme-toggle]")
+		?.addEventListener("click", () => setTheme(isDark() ? "light" : "dark"));
+
 	// A hairline under the header once the page scrolls under it.
 	const header = document.querySelector("[data-header]");
 	const update = () => header?.classList.toggle("scrolled", window.scrollY > 4);

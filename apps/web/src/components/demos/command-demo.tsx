@@ -98,7 +98,7 @@ export function CommandDemo() {
 
 	return (
 		<div ref={ref} className="relative">
-			<div className="overflow-hidden rounded-xl border bg-popover shadow-[0_40px_100px_-30px_rgb(0_0_0/0.9)]">
+			<div className="overflow-hidden rounded-xl border bg-popover shadow-window">
 				<div className="flex h-12 items-center gap-2.5 border-b px-4">
 					<Search className="size-4 text-muted-foreground" />
 					<span className="text-[0.9375rem]">

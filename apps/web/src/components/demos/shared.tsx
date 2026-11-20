@@ -11,7 +11,7 @@ export const money = (value: number, currency = "EUR", fraction = 2) =>
 		maximumFractionDigits: fraction,
 	}).format(value);
 
-/** An app-like window: dark frame, traffic lights and a title. */
+/** An app-like window: frame, traffic lights and a title. */
 export function Window({
 	title,
 	right,
@@ -26,17 +26,12 @@ export function Window({
 	bodyClassName?: string;
 }) {
 	return (
-		<div
-			className={cn(
-				"overflow-hidden rounded-xl border bg-card shadow-[0_40px_100px_-30px_rgb(0_0_0/0.9)]",
-				className,
-			)}
-		>
+		<div className={cn("overflow-hidden rounded-xl border bg-card shadow-window", className)}>
 			<div className="flex h-9 items-center gap-3 border-b px-3">
 				<span className="flex gap-1.5" aria-hidden="true">
-					<span className="size-2.5 rounded-full bg-white/15" />
-					<span className="size-2.5 rounded-full bg-white/15" />
-					<span className="size-2.5 rounded-full bg-white/15" />
+					<span className="size-2.5 rounded-full bg-foreground/15" />
+					<span className="size-2.5 rounded-full bg-foreground/15" />
+					<span className="size-2.5 rounded-full bg-foreground/15" />
 				</span>
 				<span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{title}</span>
 				{right}

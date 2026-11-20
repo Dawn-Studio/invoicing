@@ -12,6 +12,8 @@
 
 /* Scan this package's components so consumers get their utility classes. */
 @source "../";
+/* Markdown in assistant replies (AI Elements MessageResponse) is styled with classes from Streamdown. */
+@source "../../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:is(.dark *));
 

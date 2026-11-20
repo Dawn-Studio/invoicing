@@ -173,3 +173,18 @@ export const settings = sqliteTable("settings", {
 	value: text({ mode: "json" }).$type<unknown>().notNull(),
 	updatedAt: integer().notNull(),
 });
+
+/**
+ * Assistant conversations. `messages` holds the AI SDK's UI messages as they were shown;
+ * attachments inside them point at files in the app's attachment folder, not inline data.
+ */
+export const assistantChats = sqliteTable(
+	"assistant_chats",
+	{
+		id: text().primaryKey(),
+		title: text().notNull().default(""),
+		messages: text({ mode: "json" }).$type<unknown[]>().notNull(),
+		...timestamps,
+	},
+	(t) => [index("assistant_chats_updated_idx").on(t.updatedAt)],
+);

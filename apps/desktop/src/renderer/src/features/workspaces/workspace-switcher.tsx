@@ -26,7 +26,7 @@ export function WorkspaceSwitcher() {
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger
-					className="app-no-drag flex h-7 min-w-0 items-center gap-2 rounded-md px-1.5 text-[0.9375rem] font-semibold outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring data-[state=open]:bg-sidebar-accent"
+					className="app-no-drag flex h-8 min-w-0 items-center gap-2 rounded-md px-1.5 text-[0.9375rem] font-semibold outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring data-[state=open]:bg-sidebar-accent"
 					disabled={!active}
 				>
 					{active ? <WorkspaceAvatar id={active.id} name={active.name} /> : null}

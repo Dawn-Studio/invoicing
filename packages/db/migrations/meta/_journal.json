@@ -29,6 +29,13 @@
       "when": 1794969583411,
       "tag": "0003_catalog_items",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1795134821898,
+      "tag": "0004_assistant_chats",
+      "breakpoints": true
     }
   ]
 }

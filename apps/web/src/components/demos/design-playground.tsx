@@ -64,7 +64,7 @@ export function DesignPlayground() {
 					Your logo goes on top. Every invoice you send keeps the look it had when you issued it.
 				</p>
 			</div>
-			<div className="bg-background/40 p-4 sm:p-6">
+			<div className="bg-secondary/70 p-4 sm:p-6 dark:bg-background/40">
 				<LayoutGroup>
 					<motion.div
 						layout

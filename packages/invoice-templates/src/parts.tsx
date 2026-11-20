@@ -41,6 +41,37 @@ export function Sheet({
 	);
 }
 
+/** Black or white, whichever reads better on the accent (users pick any colour). */
+export function onAccent(hex: string): string {
+	const value = Number.parseInt(hex.slice(1), 16);
+	const channel = (shift: number) => {
+		const c = ((value >> shift) & 255) / 255;
+		return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+	};
+	const luminance = 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0);
+	return luminance > 0.45 ? "#171717" : "#ffffff";
+}
+
+/**
+ * The accent for text on white: light accents (yellow, pastel) are darkened until they read,
+ * dark ones are used as they are.
+ */
+export function accentInk(hex: string): string {
+	if (onAccent(hex) === "#ffffff") return hex;
+	const value = Number.parseInt(hex.slice(1), 16);
+	const darken = (shift: number) =>
+		Math.round(((value >> shift) & 255) * 0.5)
+			.toString(16)
+			.padStart(2, "0");
+	return `#${darken(16)}${darken(8)}${darken(0)}`;
+}
+
+/** The accent at an opacity, as #rrggbbaa. */
+export const tint = (hex: string, alpha: number) =>
+	`${hex}${Math.round(alpha * 255)
+		.toString(16)
+		.padStart(2, "0")}`;
+
 export const Muted = ({ children }: { children: ReactNode }) => (
 	<span className="text-neutral-400 italic">{children}</span>
 );
@@ -49,15 +80,19 @@ export const Muted = ({ children }: { children: ReactNode }) => (
 export const placeholderFor = (draft: boolean) => (text: string) =>
 	draft ? <Muted>{text}</Muted> : null;
 
+/** A small uppercase label. `color` overrides the grey (e.g. on a coloured band). */
 export const Heading = ({
 	children,
 	className = "",
+	color,
 }: {
 	children: ReactNode;
 	className?: string;
+	color?: string;
 }) => (
 	<h3
-		className={`mb-2 text-[11px] font-medium tracking-wider text-neutral-500 uppercase ${className}`}
+		className={`mb-2 text-[11px] font-medium tracking-wider uppercase ${color ? "" : "text-neutral-500"} ${className}`}
+		style={color ? { color } : undefined}
 	>
 		{children}
 	</h3>
@@ -114,20 +149,35 @@ export function Party({
 	);
 }
 
-/** The line-item table. `headClassName` styles the header row (templates differ there). */
+/**
+ * The line-item table. `headClassName` styles the header row (templates differ there);
+ * `variant` adds zebra rows or full cell borders, `dense` tightens rows for long invoices.
+ */
 export function ItemsTable({
 	invoice,
 	draft,
 	headClassName = "border-b border-neutral-300",
 	headStyle,
+	variant = "plain",
+	dense = false,
+	stripeColor = "#f5f5f5",
 }: Pick<TemplateProps, "invoice" | "draft"> & {
 	headClassName?: string;
 	headStyle?: CSSProperties;
+	variant?: "plain" | "striped" | "grid";
+	dense?: boolean;
+	stripeColor?: string;
 }) {
 	const { currency } = invoice;
 	const showTax = invoice.items.some((item) => item.taxRate > 0);
 	const showUnits = invoice.items.some((item) => item.unit.trim() !== "");
 	const placeholder = placeholderFor(Boolean(draft));
+	const grid = variant === "grid";
+	const y = dense ? "py-1.5" : "py-3";
+	const cell = grid ? `border border-neutral-300 px-2.5 ${y}` : y;
+	const head = grid ? "border border-neutral-300 px-2.5 py-2" : "py-2";
+	const first = grid ? "" : "pr-4 pl-0";
+	const rest = grid ? "" : "pl-4";
 	return (
 		<table className="w-full border-collapse tabular-nums">
 			<thead>
@@ -135,38 +185,54 @@ export function ItemsTable({
 					className={`text-left text-[11px] tracking-wider text-neutral-500 uppercase ${headClassName}`}
 					style={headStyle}
 				>
-					<th className="py-2 pr-4 pl-0 font-medium">Description</th>
-					<th className="py-2 pl-4 text-right font-medium">Qty</th>
-					{showUnits ? <th className="py-2 pl-2 text-left font-medium">Unit</th> : null}
-					<th className="py-2 pl-4 text-right font-medium">Rate</th>
-					{showTax ? <th className="py-2 pl-4 text-right font-medium">Tax</th> : null}
-					<th className="py-2 pl-4 text-right font-medium">Amount</th>
+					<th className={`${head} ${first} font-medium`}>Description</th>
+					<th className={`${head} ${rest} text-right font-medium`}>Qty</th>
+					{showUnits ? (
+						<th className={`${head} ${grid ? "" : "pl-2"} text-left font-medium`}>Unit</th>
+					) : null}
+					<th className={`${head} ${rest} text-right font-medium`}>Rate</th>
+					{showTax ? <th className={`${head} ${rest} text-right font-medium`}>Tax</th> : null}
+					<th className={`${head} ${rest} text-right font-medium`}>Amount</th>
 				</tr>
 			</thead>
 			<tbody>
 				{invoice.items.length === 0 ? (
 					<tr className="border-b border-neutral-200">
-						<td colSpan={6} className="py-3">
+						<td colSpan={6} className={cell}>
 							{placeholder("No line items yet")}
 						</td>
 					</tr>
 				) : (
 					invoice.items.map((item, index) => (
-						// Lines have no stable id in the snapshot; position is the identity.
-						// biome-ignore lint/suspicious/noArrayIndexKey: see above
-						<tr key={index} className="break-inside-avoid border-b border-neutral-200 align-top">
-							<td className="py-3 pr-4 whitespace-pre-line">
+						<tr
+							// Lines have no stable id in the snapshot; position is the identity.
+							// biome-ignore lint/suspicious/noArrayIndexKey: see above
+							key={index}
+							className={`break-inside-avoid align-top ${grid ? "" : "border-b border-neutral-200"}`}
+							style={
+								variant === "striped" && index % 2 === 1
+									? { backgroundColor: stripeColor }
+									: undefined
+							}
+						>
+							<td
+								className={`${cell} ${first} ${variant === "striped" ? "pl-2" : ""} whitespace-pre-line`}
+							>
 								{item.description || placeholder("Description")}
 							</td>
-							<td className="py-3 pl-4 text-right">{quantity(item.quantity)}</td>
-							{showUnits ? <td className="py-3 pl-2 text-neutral-500">{item.unit}</td> : null}
-							<td className="py-3 pl-4 text-right">{figure(item.unitPrice, currency)}</td>
+							<td className={`${cell} ${rest} text-right`}>{quantity(item.quantity)}</td>
+							{showUnits ? (
+								<td className={`${cell} ${grid ? "" : "pl-2"} text-neutral-500`}>{item.unit}</td>
+							) : null}
+							<td className={`${cell} ${rest} text-right`}>{figure(item.unitPrice, currency)}</td>
 							{showTax ? (
-								<td className="py-3 pl-4 text-right text-neutral-500">
+								<td className={`${cell} ${rest} text-right text-neutral-500`}>
 									{item.taxRate > 0 ? percent(item.taxRate) : "—"}
 								</td>
 							) : null}
-							<td className="py-3 pl-4 text-right">{figure(item.amount, currency)}</td>
+							<td className={`${cell} ${rest} ${variant === "striped" ? "pr-2" : ""} text-right`}>
+								{figure(item.amount, currency)}
+							</td>
 						</tr>
 					))
 				)}
@@ -180,12 +246,16 @@ export function Totals({
 	invoice,
 	accent,
 	className = "w-[300px]",
+	filled = false,
 }: {
 	invoice: InvoiceSnapshot;
 	accent?: string;
 	className?: string;
+	/** The total on a solid accent bar instead of under a rule. */
+	filled?: boolean;
 }) {
 	const { totals, currency } = invoice;
+	const fill = filled && accent ? { backgroundColor: accent, color: onAccent(accent) } : null;
 	return (
 		<dl className={`grid grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 tabular-nums ${className}`}>
 			<dt className="text-neutral-500">Subtotal</dt>
@@ -206,11 +276,19 @@ export function Totals({
 				</div>
 			))}
 			{/* One row with one rule across both columns. */}
-			<div className="col-span-2 mt-2 flex items-baseline justify-between gap-6 border-t border-neutral-300 pt-3">
+			<div
+				className={`col-span-2 mt-2 flex items-baseline justify-between gap-6 ${fill ? "rounded-md px-3 py-2.5" : "border-t border-neutral-300 pt-3"}`}
+				style={fill ?? undefined}
+			>
 				<dt className="font-semibold">Total due</dt>
-				<dd className="text-right text-[15px] font-semibold" style={{ color: accent }}>
+				<dd
+					className="text-right text-[15px] font-semibold"
+					style={fill || !accent ? undefined : { color: accentInk(accent) }}
+				>
 					{money(totals.total, currency)}
-					<span className="ml-1.5 font-mono text-[11px] font-normal text-neutral-500">
+					<span
+						className={`ml-1.5 font-mono text-[11px] font-normal ${fill ? "opacity-75" : "text-neutral-500"}`}
+					>
 						{currency}
 					</span>
 				</dd>
@@ -230,19 +308,48 @@ export function Dates({ invoice }: { invoice: InvoiceSnapshot }) {
 	);
 }
 
+/** Where to pay: the payment account's details, label and value per line. */
+export function PaymentDetails({
+	invoice,
+	draft,
+	labelColor,
+}: Pick<TemplateProps, "invoice" | "draft"> & { labelColor?: string }) {
+	if (!invoice.paymentAccount) return placeholderFor(Boolean(draft))("No payment account");
+	return (
+		<dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5">
+			{invoice.paymentAccount.details.map((detail) => (
+				<div key={`${detail.label}-${detail.value}`} className="contents">
+					<dt
+						className={labelColor ? "" : "text-neutral-500"}
+						style={labelColor ? { color: labelColor } : undefined}
+					>
+						{detail.label}
+					</dt>
+					<dd className="font-mono text-[12px] break-all">{detail.value}</dd>
+				</div>
+			))}
+		</dl>
+	);
+}
+
 /** Notes, tax notes, payment details, terms and the footer: the bottom of the page. */
 export function Closing({
 	invoice,
 	draft,
 	branding,
-}: Pick<TemplateProps, "invoice" | "draft" | "branding">) {
+	payment = true,
+	className = "",
+}: Pick<TemplateProps, "invoice" | "draft" | "branding"> & {
+	/** False when the template shows payment details elsewhere. */
+	payment?: boolean;
+	className?: string;
+}) {
 	const { issuer } = invoice;
-	const placeholder = placeholderFor(Boolean(draft));
 	const contact = [issuer.legalName || issuer.name, issuer.email, issuer.phone, issuer.website]
 		.filter((part) => part.trim() !== "")
 		.join("  ·  ");
 	return (
-		<div className="mt-auto flex break-inside-avoid flex-col gap-8 pt-10">
+		<div className={`mt-auto flex break-inside-avoid flex-col gap-8 pt-10 ${className}`}>
 			{invoice.notes.trim() || invoice.taxNotes.length > 0 ? (
 				<section className="flex flex-col gap-1.5">
 					{invoice.notes.trim() ? <p className="whitespace-pre-line">{invoice.notes}</p> : null}
@@ -255,21 +362,12 @@ export function Closing({
 			) : null}
 
 			<section className="grid grid-cols-2 gap-10">
-				<div>
-					<Heading>Payment details</Heading>
-					{invoice.paymentAccount ? (
-						<dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5">
-							{invoice.paymentAccount.details.map((detail) => (
-								<div key={`${detail.label}-${detail.value}`} className="contents">
-									<dt className="text-neutral-500">{detail.label}</dt>
-									<dd className="font-mono text-[12px] break-all">{detail.value}</dd>
-								</div>
-							))}
-						</dl>
-					) : (
-						placeholder("No payment account")
-					)}
-				</div>
+				{payment ? (
+					<div>
+						<Heading>Payment details</Heading>
+						<PaymentDetails invoice={invoice} draft={draft} />
+					</div>
+				) : null}
 				{invoice.terms.trim() ? (
 					<div>
 						<Heading>Terms</Heading>
@@ -285,5 +383,39 @@ export function Closing({
 				) : null}
 			</footer>
 		</div>
+	);
+}
+
+/** A small labelled value: "Due" / "3 December 2026". */
+export function Fact({
+	label,
+	children,
+	className = "",
+	labelColor,
+}: {
+	label: string;
+	children: ReactNode;
+	className?: string;
+	labelColor?: string;
+}) {
+	return (
+		<div className={className}>
+			<Heading className="mb-1" color={labelColor}>
+				{label}
+			</Heading>
+			<div>{children}</div>
+		</div>
+	);
+}
+
+/** The invoice number, or a hint while it's a draft without one. */
+export function InvoiceNumber({ invoice, draft }: Pick<TemplateProps, "invoice" | "draft">) {
+	return (
+		<>
+			{invoice.number || placeholderFor(Boolean(draft))("Number on issue")}
+			{draft && invoice.number ? (
+				<span className="ml-1.5 text-[0.75em] font-normal opacity-50">draft</span>
+			) : null}
+		</>
 	);
 }

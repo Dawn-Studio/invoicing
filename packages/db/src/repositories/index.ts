@@ -1,4 +1,5 @@
 import type { Db } from "../database";
+import { assistantChatRepository } from "./assistant-chats";
 import { catalogRepository } from "./catalog";
 import { clientRepository } from "./clients";
 import { createContext, type RepositoryContext } from "./context";
@@ -20,10 +21,12 @@ export function createRepositories(db: Db, overrides?: Partial<Omit<RepositoryCo
 		invoices: invoiceRepository(ctx),
 		settings: settingsRepository(ctx),
 		reports: reportRepository(ctx),
+		assistantChats: assistantChatRepository(ctx),
 	};
 }
 
 export type Repositories = ReturnType<typeof createRepositories>;
+export type { AssistantChat, AssistantChatSummary } from "./assistant-chats";
 export type { CatalogListOptions } from "./catalog";
 export type { ClientListOptions } from "./clients";
 export type { InvoiceListOptions } from "./invoices";

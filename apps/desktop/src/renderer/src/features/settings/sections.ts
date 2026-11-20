@@ -10,6 +10,7 @@ import {
 	Mail,
 	Paintbrush,
 	Percent,
+	Sparkles,
 	SunMoon,
 } from "lucide-react";
 
@@ -79,6 +80,13 @@ export const SETTINGS_SECTIONS = [
 		label: "Appearance",
 		description: "Light or dark, and the colour palette. Applies to every workspace.",
 		icon: SunMoon,
+		group: "app",
+	},
+	{
+		id: "assistant",
+		label: "Assistant",
+		description: "Connect OpenRouter or your ChatGPT plan, pick a model, and choose where it's on.",
+		icon: Sparkles,
 		group: "app",
 	},
 	{
