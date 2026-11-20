@@ -64,6 +64,8 @@ export const assistantPanel = {
 	toggle: () => emit({ open: !state.open }),
 	show: (draft?: string) => emit({ open: true, draft: draft ?? state.draft }),
 	hide: () => emit({ open: false }),
+	/** Puts a prompt in whichever box is showing (Home's or the panel's) without opening anything. */
+	prefill: (draft: string) => emit({ draft }),
 	takeDraft: () => {
 		const { draft } = state;
 		if (draft !== null) state = { ...state, draft: null };
@@ -88,6 +90,7 @@ export const useAssistantChats = () => useRpcQuery("assistant.chats");
 export const useSetAssistantModel = () => useRpcMutation("assistant.setModel", ["assistant"]);
 export const useSetAssistantProvider = () => useRpcMutation("assistant.setProvider", ["assistant"]);
 export const useSetAssistantEnabled = () => useRpcMutation("assistant.setEnabled", ["assistant"]);
+export const useSetAutoApprove = () => useRpcMutation("assistant.setAutoApprove", ["assistant"]);
 export const useAcknowledgeAssistant = () => useRpcMutation("assistant.acknowledge", ["assistant"]);
 export const useDisconnectAssistant = () => useRpcMutation("assistant.disconnect", ["assistant"]);
 export const useDeleteAssistantChat = () => useRpcMutation("assistant.deleteChat", ["assistant"]);

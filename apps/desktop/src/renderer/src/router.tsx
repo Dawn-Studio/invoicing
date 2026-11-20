@@ -5,6 +5,8 @@ import { ItemsPage } from "./features/catalog/items-page";
 import { ClientPage } from "./features/clients/client-page";
 import { ClientsPage } from "./features/clients/clients-page";
 import { DashboardPage } from "./features/dashboard/dashboard-page";
+import { HomePage } from "./features/home/home-page";
+import { StartScreenRedirect } from "./features/home/start-screen";
 import { InvoicePage } from "./features/invoices/invoice-page";
 import { InvoicesPage } from "./features/invoices/invoices-page";
 import { PrintPage } from "./features/invoices/print-page";
@@ -24,7 +26,9 @@ export const router = createHashRouter([
 				// A screen that crashes is replaced by the error inside the layout; the sidebar stays.
 				errorElement: <RouteError />,
 				children: [
-					{ index: true, element: <DashboardPage /> },
+					{ index: true, element: <StartScreenRedirect /> },
+					{ path: "home", element: <HomePage /> },
+					{ path: "dashboard", element: <DashboardPage /> },
 					{ path: "invoices", element: <InvoicesPage /> },
 					{ path: "invoices/:id", element: <InvoicePage /> },
 					{ path: "clients", element: <ClientsPage /> },

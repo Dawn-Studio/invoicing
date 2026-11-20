@@ -135,7 +135,11 @@ function SetupWorkspaceSwitch() {
 						disabled={actions.pending}
 						onSelect={() => actions.switchTo(workspace.id)}
 					>
-						<WorkspaceAvatar id={workspace.id} name={workspace.name} />
+						<WorkspaceAvatar
+							id={workspace.id}
+							name={workspace.name}
+							avatarFile={workspace.avatarFile}
+						/>
 						<span className="truncate">{workspace.name}</span>
 					</DropdownMenuItem>
 				))}

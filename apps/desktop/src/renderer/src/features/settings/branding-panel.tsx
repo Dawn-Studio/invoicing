@@ -149,7 +149,9 @@ export function BrandingPanel({ profile }: { profile: BusinessProfile }) {
 				<div className="flex flex-col gap-3">
 					<div className="flex items-baseline justify-between gap-4">
 						<span className="text-sm font-medium">Template</span>
-						<span className="text-sm text-muted-foreground">{templates[branding.template as keyof typeof templates]?.description}</span>
+						<span className="text-sm text-muted-foreground">
+							{templates[branding.template as keyof typeof templates]?.description}
+						</span>
 					</div>
 					<div className="grid grid-cols-3 gap-x-4 gap-y-5">
 						{samples.map(({ template, invoice }) => {
@@ -174,7 +176,10 @@ export function BrandingPanel({ profile }: { profile: BusinessProfile }) {
 											className="pointer-events-none"
 										/>
 									</div>
-									<span className="flex items-center gap-1.5 text-sm" title={templates[template].description}>
+									<span
+										className="flex items-center gap-1.5 text-sm"
+										title={templates[template].description}
+									>
 										{selected ? <Check className="size-3.5 text-brand-ink" /> : null}
 										{templates[template].name}
 									</span>

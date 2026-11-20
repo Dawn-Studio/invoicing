@@ -10,6 +10,7 @@ export const appHotkeys = defineAppHotkeys({
 	"palette.open": { hotkey: "Mod+K", meta: { name: "Command palette", group: "General" } },
 	"assistant.toggle": { hotkey: "Mod+J", meta: { name: "Assistant", group: "General" } },
 	"help.shortcuts": { hotkey: "?", meta: { name: "Keyboard shortcuts", group: "General" } },
+	"nav.home": { hotkey: ["G", "H"], meta: { name: "Go to Home", group: "Navigation" } },
 	"nav.dashboard": { hotkey: ["G", "D"], meta: { name: "Go to Dashboard", group: "Navigation" } },
 	"nav.invoices": { hotkey: ["G", "I"], meta: { name: "Go to Invoices", group: "Navigation" } },
 	"nav.clients": { hotkey: ["G", "C"], meta: { name: "Go to Clients", group: "Navigation" } },

@@ -768,6 +768,7 @@ export type PromptInputTextareaProps = ComponentProps<typeof InputGroupTextarea>
 
 export const PromptInputTextarea = ({
 	onChange,
+	onKeyDown,
 	className,
 	placeholder = "What would you like to know?",
 	...props
@@ -776,7 +777,11 @@ export const PromptInputTextarea = ({
 	const attachments = usePromptInputAttachments();
 	const [isComposing, setIsComposing] = useState(false);
 
+	// Enter sends, Shift+Enter adds a line. The caller's own key handler runs first and can
+	// claim a key with preventDefault (it used to replace this one entirely).
 	const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
+		onKeyDown?.(e);
+		if (e.defaultPrevented) return;
 		if (e.key === "Enter") {
 			if (isComposing || e.nativeEvent.isComposing) {
 				return;

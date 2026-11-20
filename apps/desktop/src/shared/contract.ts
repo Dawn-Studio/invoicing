@@ -99,6 +99,10 @@ export const PALETTES = [
 ] as const;
 export type Palette = (typeof PALETTES)[number];
 
+/** What opens when the app starts (and on "/"): the assistant home, or a screen. */
+export const START_SCREENS = ["home", "dashboard", "invoices", "clients", "reports"] as const;
+export type StartScreen = (typeof START_SCREENS)[number];
+
 /**
  * Where the app is with updates. Windows and the Linux AppImage download and install updates
  * themselves ("ready" → restart). The unsigned macOS app and the .deb can't replace
@@ -124,6 +128,8 @@ export interface Workspace {
 	id: string;
 	name: string;
 	createdAt: number;
+	/** Square image (stored like logos, read with `logos.get`) shown instead of the initials. */
+	avatarFile: string | null;
 }
 
 export interface WorkspaceList {
@@ -159,6 +165,8 @@ export interface AssistantStatus {
 	enabled: boolean;
 	/** The user has seen what gets sent where. */
 	acknowledged: boolean;
+	/** Changes are made without asking first. */
+	autoApprove: boolean;
 	/** The model new messages use (the active provider's pick or default). */
 	model: string | null;
 	openrouter: { connected: boolean; via: "oauth" | "key" | null; model: string };
@@ -229,6 +237,11 @@ export const contract = {
 		output: returns<Theme>(),
 	},
 	"preferences.palette": { input: z.void(), output: returns<Palette>() },
+	"preferences.startScreen": { input: z.void(), output: returns<StartScreen>() },
+	"preferences.setStartScreen": {
+		input: z.object({ screen: z.enum(START_SCREENS) }),
+		output: returns<StartScreen>(),
+	},
 	"preferences.setPalette": {
 		input: z.object({ palette: z.enum(PALETTES) }),
 		output: returns<Palette>(),
@@ -245,6 +258,9 @@ export const contract = {
 		input: byId.extend({ name: workspaceName }),
 		output: returns<Workspace>(),
 	},
+	/** Opens a file dialog; null when cancelled. */
+	"workspaces.chooseAvatar": { input: byId, output: returns<Workspace | null>() },
+	"workspaces.removeAvatar": { input: byId, output: returns<Workspace>() },
 	/** Moves the workspace's data file to the Trash. */
 	"workspaces.delete": { input: byId, output: returns<WorkspaceList>() },
 
@@ -480,6 +496,10 @@ export const contract = {
 		output: returns<AssistantStatus>(),
 	},
 	"assistant.acknowledge": { input: z.void(), output: returns<AssistantStatus>() },
+	"assistant.setAutoApprove": {
+		input: z.object({ autoApprove: z.boolean() }),
+		output: returns<AssistantStatus>(),
+	},
 	"assistant.chats": { input: z.void(), output: returns<AssistantChatSummary[]>() },
 	/** A conversation's messages (AI SDK UI messages). */
 	"assistant.chat": {

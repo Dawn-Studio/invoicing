@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { formatMoney } from "@dawnstudio/core";
 import {
 	createRepositories,
 	type OpenedDatabase,
@@ -64,7 +65,7 @@ describe("assistant tools", () => {
 			[1000, 4_200_000, 0],
 			[1500, 95_050, 2500],
 		]);
-		expect(result.total).toBe(`${(invoice.total / 100).toFixed(2)} NOK`);
+		expect(result.total).toBe(formatMoney(invoice.total, "NOK", "en"));
 	});
 
 	it("only changes drafts, and replaces lines when asked", () => {

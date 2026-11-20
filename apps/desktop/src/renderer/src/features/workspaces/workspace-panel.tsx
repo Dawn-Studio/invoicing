@@ -12,10 +12,17 @@ import { Button } from "@dawnstudio/ui/components/button";
 import { Field, FieldDescription, FieldLabel } from "@dawnstudio/ui/components/field";
 import { Input } from "@dawnstudio/ui/components/input";
 import { Panel, PanelBody, PanelHeader, PanelTitle } from "@dawnstudio/ui/components/panel";
+import { Spinner } from "@dawnstudio/ui/components/spinner";
 import { useId, useState } from "react";
 import { toast } from "sonner";
+import type { Workspace } from "../../../../shared/contract";
 import { showSaveError } from "../../lib/forms";
-import { useRenameWorkspace, useWorkspaces } from "../../lib/queries";
+import {
+	useChooseWorkspaceAvatar,
+	useRemoveWorkspaceAvatar,
+	useRenameWorkspace,
+	useWorkspaces,
+} from "../../lib/queries";
 import { useWorkspaceActions } from "./use-workspace-actions";
 import { WorkspaceAvatar } from "./workspace-avatar";
 
@@ -34,13 +41,7 @@ export function WorkspacePanel() {
 	);
 }
 
-function WorkspaceForm({
-	workspace,
-	canDelete,
-}: {
-	workspace: { id: string; name: string };
-	canDelete: boolean;
-}) {
+function WorkspaceForm({ workspace, canDelete }: { workspace: Workspace; canDelete: boolean }) {
 	const id = useId();
 	const [name, setName] = useState(workspace.name);
 	const [confirming, setConfirming] = useState(false);
@@ -61,9 +62,9 @@ function WorkspaceForm({
 		<Panel>
 			<PanelHeader>
 				<PanelTitle>Workspace</PanelTitle>
-				<WorkspaceAvatar id={workspace.id} name={trimmed || workspace.name} />
 			</PanelHeader>
 			<PanelBody className="flex flex-col gap-5">
+				<AvatarPicker workspace={workspace} name={trimmed || workspace.name} />
 				<form
 					className="flex items-end gap-2"
 					onSubmit={(event) => {
@@ -125,5 +126,47 @@ function WorkspaceForm({
 				</AlertDialogContent>
 			</AlertDialog>
 		</Panel>
+	);
+}
+
+/** The square icon in the sidebar, switcher and command palette; the invoice logo is separate. */
+function AvatarPicker({ workspace, name }: { workspace: Workspace; name: string }) {
+	const choose = useChooseWorkspaceAvatar();
+	const remove = useRemoveWorkspaceAvatar();
+	const busy = choose.isPending || remove.isPending;
+
+	const onChoose = () =>
+		choose
+			.mutateAsync({ id: workspace.id })
+			.then((saved) => saved && toast.success("Avatar updated"))
+			.catch((error) => showSaveError(error));
+	const onRemove = () =>
+		remove.mutateAsync({ id: workspace.id }).catch((error) => showSaveError(error));
+
+	return (
+		<div className="flex items-center gap-4">
+			<WorkspaceAvatar
+				id={workspace.id}
+				name={name}
+				avatarFile={workspace.avatarFile}
+				className="size-14 rounded-xl text-lg"
+			/>
+			<div className="flex min-w-0 flex-1 flex-col gap-2">
+				<p className="text-sm text-muted-foreground">
+					A square image shown next to the workspace name. PNG, JPG, WebP or SVG up to 2 MB.
+				</p>
+				<div className="flex gap-2">
+					<Button type="button" variant="outline" size="sm" onClick={onChoose} disabled={busy}>
+						{choose.isPending ? <Spinner /> : null}
+						{workspace.avatarFile ? "Replace…" : "Upload avatar…"}
+					</Button>
+					{workspace.avatarFile ? (
+						<Button type="button" variant="ghost" size="sm" onClick={onRemove} disabled={busy}>
+							Remove
+						</Button>
+					) : null}
+				</div>
+			</div>
+		</div>
 	);
 }

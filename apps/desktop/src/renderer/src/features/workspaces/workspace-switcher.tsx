@@ -29,7 +29,9 @@ export function WorkspaceSwitcher() {
 					className="app-no-drag flex h-8 min-w-0 items-center gap-2 rounded-md px-1.5 text-[0.9375rem] font-semibold outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring data-[state=open]:bg-sidebar-accent"
 					disabled={!active}
 				>
-					{active ? <WorkspaceAvatar id={active.id} name={active.name} /> : null}
+					{active ? (
+						<WorkspaceAvatar id={active.id} name={active.name} avatarFile={active.avatarFile} />
+					) : null}
 					<span className="truncate">{active?.name ?? "Invoicing"}</span>
 					<ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
 				</DropdownMenuTrigger>
@@ -43,7 +45,11 @@ export function WorkspaceSwitcher() {
 							disabled={actions.pending}
 							onSelect={() => workspace.id !== data.activeId && actions.switchTo(workspace.id)}
 						>
-							<WorkspaceAvatar id={workspace.id} name={workspace.name} />
+							<WorkspaceAvatar
+								id={workspace.id}
+								name={workspace.name}
+								avatarFile={workspace.avatarFile}
+							/>
 							<span className="flex-1 truncate">{workspace.name}</span>
 							{workspace.id === data.activeId ? <Check className="text-muted-foreground" /> : null}
 						</DropdownMenuItem>

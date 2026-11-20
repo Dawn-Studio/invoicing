@@ -20,6 +20,7 @@ import {
 	Check,
 	DatabaseBackup,
 	FileText,
+	House,
 	Keyboard,
 	LayoutDashboard,
 	type LucideIcon,
@@ -211,7 +212,8 @@ export function CommandPalette({
 				hotkey: hotkeys["help.shortcuts"].hotkey,
 				run: actions.shortcuts,
 			},
-			go("dashboard", "Dashboard", "/", LayoutDashboard, hotkeys["nav.dashboard"].hotkey),
+			go("home", "Home", "/home", House, hotkeys["nav.home"].hotkey),
+			go("dashboard", "Dashboard", "/dashboard", LayoutDashboard, hotkeys["nav.dashboard"].hotkey),
 			go("invoices", "Invoices", "/invoices", FileText, hotkeys["nav.invoices"].hotkey),
 			go("clients", "Clients", "/clients", Users, hotkeys["nav.clients"].hotkey),
 			go("items", "Items", "/items", Package, hotkeys["nav.items"].hotkey),
@@ -255,6 +257,7 @@ export function CommandPalette({
 						<WorkspaceAvatar
 							id={workspace.id}
 							name={workspace.name}
+							avatarFile={workspace.avatarFile}
 							className="size-4 text-[0.5rem]"
 						/>
 					),

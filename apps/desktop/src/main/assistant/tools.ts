@@ -2,6 +2,7 @@ import {
 	addDays,
 	type Client,
 	DomainError,
+	formatMoney,
 	formatQuantity,
 	formatRate,
 	fromMinor,
@@ -49,7 +50,8 @@ const lineSchema = z.object({
 });
 type LineInput = z.infer<typeof lineSchema>;
 
-const money = (value: number, code: string) => `${fromMinor(value, code)} ${code}`;
+/** "€5,340.00": read by the model and shown in the app's step log. */
+const money = (value: number, code: string) => formatMoney(value, code, "en");
 
 function clientView(client: Client) {
 	return {

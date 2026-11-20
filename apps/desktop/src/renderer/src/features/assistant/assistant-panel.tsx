@@ -41,7 +41,7 @@ export const ASSISTANT_PANEL = { fallback: 400, min: 320, max: 760 };
 const PANEL = ASSISTANT_PANEL;
 
 /** The record on screen, so "this invoice" in a message means the open one. */
-function useScreen(): AssistantScreen {
+export function useScreen(): AssistantScreen {
 	const { pathname } = useLocation();
 	const match = /^\/(invoices|clients)\/([0-9a-f-]{36})$/.exec(pathname);
 	if (!match?.[2]) return null;
@@ -50,7 +50,10 @@ function useScreen(): AssistantScreen {
 
 /** The assistant, docked on the right of every screen. ⌘J opens and closes it. */
 export function AssistantPanel({ sidebarWidth }: { sidebarWidth: number }) {
-	const { open } = useAssistantPanel();
+	const { open: wanted } = useAssistantPanel();
+	// Home is the assistant itself; no second one on the side.
+	const onHome = useLocation().pathname.startsWith("/home");
+	const open = wanted && !onHome;
 	const { state } = useSidebar();
 	// Conversations belong to a workspace: switching starts fresh.
 	const { data: workspaces } = useWorkspaces();
@@ -320,7 +323,7 @@ function Centered({
 }
 
 /** Shown once before the first message: what leaves this computer, and where it goes. */
-function Disclosure({ chatgpt, onAccept }: { chatgpt: boolean; onAccept: () => void }) {
+export function Disclosure({ chatgpt, onAccept }: { chatgpt: boolean; onAccept: () => void }) {
 	return (
 		<div className="flex flex-col gap-2.5 rounded-lg border bg-muted/40 p-3 text-sm">
 			<p className="flex items-center gap-2 font-medium">

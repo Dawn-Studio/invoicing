@@ -16,6 +16,9 @@ const LOGO_TYPES = {
 } as const;
 type LogoType = keyof typeof LOGO_TYPES;
 
+/** Stored image names: a content hash plus the detected type. Anything else is refused. */
+export const LOGO_NAME = /^[0-9a-f]{32}\.(png|jpg|webp|svg)$/;
+
 export const logosFolder = () => join(app.getPath("userData"), "logos");
 
 /** Asks for one file, attached to the focused window. Returns null if cancelled. */
@@ -47,13 +50,14 @@ function detectLogoType(bytes: Buffer): LogoType | null {
 }
 
 /**
- * Lets the user pick a logo and copies it into the app's logo folder. Files are named by
- * their content hash and never overwritten or deleted, so issued invoice snapshots that
- * point at an older logo keep working. Returns the stored file name, or null if cancelled.
+ * Lets the user pick an image (an invoice logo or a workspace avatar) and copies it into the
+ * app's logo folder. Files are named by their content hash and never overwritten or deleted,
+ * so issued invoice snapshots that point at an older logo keep working. Returns the stored
+ * file name, or null if cancelled.
  */
-export async function chooseLogo(): Promise<string | null> {
+export async function chooseLogo(title = "Choose a logo"): Promise<string | null> {
 	const path = await pickFile({
-		title: "Choose a logo",
+		title,
 		filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "svg"] }],
 	});
 	if (!path) return null;
@@ -72,7 +76,7 @@ export async function chooseLogo(): Promise<string | null> {
 export function logoDataUrl(fileName: string): string | null {
 	const type = fileName.split(".").pop() as LogoType;
 	// Names come from chooseLogo; anything else (e.g. "../x") is refused.
-	if (!/^[0-9a-f]{32}\.(png|jpg|webp|svg)$/.test(fileName) || !(type in LOGO_TYPES)) return null;
+	if (!LOGO_NAME.test(fileName) || !(type in LOGO_TYPES)) return null;
 	const path = join(logosFolder(), fileName);
 	if (!existsSync(path)) return null;
 	return `data:${LOGO_TYPES[type]};base64,${readFileSync(path).toString("base64")}`;

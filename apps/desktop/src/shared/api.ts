@@ -33,7 +33,8 @@ export type AssistantStreamEvent =
 
 /** Places the native menu can take the user to. */
 export const ROUTES = {
-	dashboard: "/",
+	home: "/home",
+	dashboard: "/dashboard",
 	invoices: "/invoices",
 	clients: "/clients",
 	items: "/items",

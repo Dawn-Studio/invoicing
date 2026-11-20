@@ -163,6 +163,7 @@ export function installMenu({ window, openWindow, checkForUpdates }: MenuOptions
 			{
 				label: "Go",
 				submenu: [
+					go("Home", "home", "CmdOrCtrl+0"),
 					go("Dashboard", "dashboard", "CmdOrCtrl+1"),
 					go("Invoices", "invoices", "CmdOrCtrl+2"),
 					go("Clients", "clients", "CmdOrCtrl+3"),

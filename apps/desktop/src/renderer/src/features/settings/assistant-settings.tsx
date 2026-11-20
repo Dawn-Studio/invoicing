@@ -33,6 +33,7 @@ import {
 	useDisconnectAssistant,
 	useSetAssistantEnabled,
 	useSetAssistantProvider,
+	useSetAutoApprove,
 } from "../../lib/assistant";
 import { showSaveError } from "../../lib/forms";
 import { useRpcQuery } from "../../lib/queries";
@@ -46,6 +47,7 @@ export function AssistantSettings() {
 	return (
 		<>
 			<ProvidersPanel status={status} />
+			<ChangesPanel status={status} />
 			<WorkspacePanel status={status} />
 		</>
 	);
@@ -242,6 +244,35 @@ function ModelRow({ status }: { status: AssistantStatus }) {
 				Switch models from the menu under the assistant's message box.
 			</span>
 		</PanelBody>
+	);
+}
+
+function ChangesPanel({ status }: { status: AssistantStatus }) {
+	const setAutoApprove = useSetAutoApprove();
+	return (
+		<Panel>
+			<PanelHeader>
+				<PanelTitle>Changes</PanelTitle>
+				<PanelLabel>{status.autoApprove ? "Automatic" : "Ask first"}</PanelLabel>
+			</PanelHeader>
+			<PanelBody className="flex items-center gap-4">
+				<Label
+					htmlFor="assistant-auto-approve"
+					className="flex min-w-0 flex-1 flex-col items-start gap-0.5 font-normal"
+				>
+					<span className="text-[0.9375rem]">Make changes without asking</span>
+					<span className="text-sm text-muted-foreground">
+						New clients, drafts and saved items are created straight away. It still never issues,
+						sends, records payments or deletes. Also in the assistant's box.
+					</span>
+				</Label>
+				<Switch
+					id="assistant-auto-approve"
+					checked={status.autoApprove}
+					onCheckedChange={(autoApprove) => setAutoApprove.mutate({ autoApprove })}
+				/>
+			</PanelBody>
+		</Panel>
 	);
 }
 

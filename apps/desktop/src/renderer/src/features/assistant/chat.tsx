@@ -11,11 +11,10 @@ import {
 	MessageResponse,
 } from "@dawnstudio/ui/components/ai-elements/message";
 import { Shimmer } from "@dawnstudio/ui/components/ai-elements/shimmer";
-import { Suggestion, Suggestions } from "@dawnstudio/ui/components/ai-elements/suggestion";
 import { Button } from "@dawnstudio/ui/components/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { isToolUIPart, lastAssistantMessageIsCompleteWithApprovalResponses } from "ai";
-import { CircleAlert, FileText, Package, Paperclip, RotateCw, Sparkles, User } from "lucide-react";
+import { CircleAlert, FileText, Package, Paperclip, RotateCw, User } from "lucide-react";
 import { useCallback, useMemo, useRef } from "react";
 import type { AssistantScreen } from "../../../../shared/api";
 import type { Mention } from "../../../../shared/contract";
@@ -23,13 +22,7 @@ import { type AssistantMessage, IpcChatTransport } from "../../lib/assistant";
 import { useRpcQuery } from "../../lib/queries";
 import { type ComposedMessage, Composer } from "./composer";
 import { ToolPart } from "./tool-part";
-
-const SUGGESTIONS = [
-	"Draft an invoice for my last client, same lines as last time",
-	"Who owes me money right now?",
-	"Turn the attached timesheet into an invoice",
-	"How much did I invoice this year, per client?",
-];
+import { AssistantWelcome, SuggestionChips, WELCOME_SUGGESTIONS } from "./welcome";
 
 interface ChatProps {
 	id: string;
@@ -42,6 +35,12 @@ interface ChatProps {
 	/** After each reply, so the conversation list shows it. */
 	onReply: () => void;
 	footer?: React.ReactNode;
+	/** "page" fills a screen: a centred prompt while empty, then a reading-width column. */
+	layout?: "panel" | "page";
+	/** Page layout, empty conversation: shown above the prompt (greeting, summary). */
+	hero?: React.ReactNode;
+	/** Prompts offered before the first message. */
+	suggestions?: string[];
 }
 
 /** One conversation: messages, tool calls with approvals, and the composer. */
@@ -54,6 +53,9 @@ export function Chat({
 	onDraftUsed,
 	onReply,
 	footer,
+	layout = "panel",
+	hero,
+	suggestions = WELCOME_SUGGESTIONS,
 }: ChatProps) {
 	const queryClient = useQueryClient();
 	const screenRef = useRef(screen);
@@ -99,33 +101,56 @@ export function Chat({
 		status === "submitted" ||
 		(status === "streaming" && last?.role === "assistant" && last.parts.length === 0);
 
+	const composer = (
+		<Composer
+			status={status}
+			disabled={disabled}
+			draft={draft}
+			onDraftUsed={onDraftUsed}
+			onStop={() => void stop()}
+			onSend={(message) => send(message)}
+			className={
+				layout === "page"
+					? "composer-glow rounded-2xl bg-background/80 shadow-lg backdrop-blur-xl"
+					: undefined
+			}
+			textareaClassName={
+				layout === "page" && messages.length === 0 ? "min-h-28 text-base md:text-base" : undefined
+			}
+		/>
+	);
+
+	// A full screen with nothing said yet: the prompt in the middle, suggestions under it.
+	if (layout === "page" && messages.length === 0) {
+		return (
+			<div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+				<div className="m-auto flex w-full max-w-[46rem] flex-col gap-6 px-6 py-10">
+					{hero ?? <AssistantWelcome />}
+					{composer}
+					<SuggestionChips
+						suggestions={suggestions}
+						disabled={disabled}
+						onPick={(text) => void send({ text, files: [], mentions: [] })}
+					/>
+					{footer}
+				</div>
+			</div>
+		);
+	}
+
+	const column = layout === "page" ? "mx-auto w-full max-w-3xl px-6" : "px-4";
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
 			<Conversation className="min-h-0 flex-1">
-				<ConversationContent className="gap-5 px-4 py-4">
+				<ConversationContent className={`gap-5 py-4 ${column} ${layout === "page" ? "pt-8" : ""}`}>
 					{messages.length === 0 ? (
-						<ConversationEmptyState className="px-2">
-							<div className="flex flex-col items-center gap-3">
-								<Sparkles className="size-6 text-brand-ink" />
-								<div className="flex flex-col gap-1">
-									<h3 className="font-medium">What can I help with?</h3>
-									<p className="text-sm text-muted-foreground">
-										Draft invoices from a description, a timesheet or an old PDF. Ask about clients
-										and payments. You approve every change.
-									</p>
-								</div>
-								<Suggestions className="mt-2 flex-col items-stretch gap-1.5 whitespace-normal">
-									{SUGGESTIONS.map((suggestion) => (
-										<Suggestion
-											key={suggestion}
-											suggestion={suggestion}
-											disabled={disabled}
-											onClick={(text) => void send({ text, files: [], mentions: [] })}
-											className="h-auto justify-start rounded-md px-3 py-2 text-left whitespace-normal"
-										/>
-									))}
-								</Suggestions>
-							</div>
+						<ConversationEmptyState className="gap-5 px-2">
+							{hero ?? <AssistantWelcome size="panel" />}
+							<SuggestionChips
+								suggestions={suggestions}
+								disabled={disabled}
+								onPick={(text) => void send({ text, files: [], mentions: [] })}
+							/>
 						</ConversationEmptyState>
 					) : null}
 					{messages.map((message) => (
@@ -172,15 +197,10 @@ export function Chat({
 				</ConversationContent>
 				<ConversationScrollButton />
 			</Conversation>
-			<div className="flex flex-col gap-2 px-3 pt-1 pb-3">
-				<Composer
-					status={status}
-					disabled={disabled}
-					draft={draft}
-					onDraftUsed={onDraftUsed}
-					onStop={() => void stop()}
-					onSend={(message) => send(message)}
-				/>
+			<div
+				className={`flex flex-col gap-2 pt-1 ${layout === "page" ? "mx-auto w-full max-w-3xl px-6 pb-6" : "px-3 pb-3"}`}
+			>
+				{composer}
 				{footer}
 			</div>
 		</div>

@@ -17,6 +17,7 @@ import {
 	ChartColumn,
 	ChevronLeft,
 	FileText,
+	House,
 	LayoutDashboard,
 	type LucideIcon,
 	Package,
@@ -45,7 +46,8 @@ interface NavEntry {
 }
 
 const overview: NavEntry[] = [
-	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
+	{ to: "/home", label: "Home", icon: House },
+	{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 	{ to: "/reports", label: "Reports", icon: ChartColumn },
 ];
 const billing: NavEntry[] = [
@@ -56,7 +58,7 @@ const billing: NavEntry[] = [
 
 function NavItem({ to, label, icon: Icon }: NavEntry) {
 	const { pathname } = useLocation();
-	const active = to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`);
+	const active = pathname === to || pathname.startsWith(`${to}/`);
 	return (
 		<SidebarMenuItem>
 			<SidebarMenuButton
@@ -213,7 +215,12 @@ function SettingsNav() {
 			group: "workspace",
 			label: workspace ? (
 				<span className="flex min-w-0 items-center gap-2">
-					<WorkspaceAvatar id={workspace.id} name={workspace.name} className="size-4 text-[8px]" />
+					<WorkspaceAvatar
+						id={workspace.id}
+						name={workspace.name}
+						avatarFile={workspace.avatarFile}
+						className="size-4 text-[8px]"
+					/>
 					<span className="truncate">{workspace.name}</span>
 				</span>
 			) : (

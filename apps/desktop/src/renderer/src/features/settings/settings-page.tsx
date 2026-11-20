@@ -41,6 +41,7 @@ import {
 	useUpdatePaymentAccount,
 	useUpdateTaxRate,
 } from "../../lib/queries";
+import { StartScreenPanel } from "../home/start-screen";
 import { LogoPanel } from "../profile/logo-panel";
 import { ProfileForm, type ProfileSection } from "../profile/profile-form";
 import { AboutPanel } from "../updates/about-panel";
@@ -131,6 +132,9 @@ function SectionContent({ id }: { id: SettingsSectionId }) {
 		case "appearance":
 			return (
 				<>
+					<PageSection>
+						<StartScreenPanel />
+					</PageSection>
 					<PageSection>
 						<ThemePanel />
 					</PageSection>

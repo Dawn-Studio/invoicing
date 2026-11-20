@@ -26,6 +26,7 @@ import {
 	writeAutomaticBackup,
 	writeBackup,
 } from "./backups";
+import { LOGO_NAME } from "./files";
 
 /**
  * Workspaces are separate businesses (e.g. "Personal" and "Studio"), each the issuer on its
@@ -44,6 +45,8 @@ const registrySchema = z.object({
 			/** Relative to the user data folder. */
 			file: z.string(),
 			createdAt: z.number(),
+			/** A square image in the logo folder, shown instead of the initials. */
+			avatarFile: z.string().regex(LOGO_NAME).nullish(),
 		}),
 	),
 });
@@ -133,6 +136,7 @@ export class WorkspaceManager {
 					name: `${backup.manifest.workspace.name} (restored)`,
 					file,
 					createdAt: Date.now(),
+					avatarFile: backup.manifest.workspace.avatarFile ?? null,
 				});
 				try {
 					return this.switchTo(id);
@@ -168,7 +172,7 @@ export class WorkspaceManager {
 	list(): WorkspaceList {
 		return {
 			activeId: this.registry.activeId,
-			workspaces: this.registry.workspaces.map(({ file: _, ...workspace }) => workspace),
+			workspaces: this.registry.workspaces.map((entry) => this.toWorkspace(entry)),
 		};
 	}
 
@@ -198,6 +202,14 @@ export class WorkspaceManager {
 	rename(id: string, name: string): Workspace {
 		const entry = this.entry(id);
 		entry.name = name;
+		this.save();
+		return this.toWorkspace(entry);
+	}
+
+	/** `avatarFile` comes from `chooseLogo` (content-addressed in the logo folder), or null. */
+	setAvatar(id: string, avatarFile: string | null): Workspace {
+		const entry = this.entry(id);
+		entry.avatarFile = avatarFile;
 		this.save();
 		return this.toWorkspace(entry);
 	}
@@ -261,8 +273,13 @@ export class WorkspaceManager {
 		);
 	}
 
-	private toWorkspace({ file: _, ...workspace }: Registry["workspaces"][number]): Workspace {
-		return workspace;
+	private toWorkspace({
+		id,
+		name,
+		createdAt,
+		avatarFile,
+	}: Registry["workspaces"][number]): Workspace {
+		return { id, name, createdAt, avatarFile: avatarFile ?? null };
 	}
 
 	private loadRegistry(): Registry {

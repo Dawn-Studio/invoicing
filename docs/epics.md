@@ -32,6 +32,7 @@ Set up once, never retype your own details.
 - ✅ Payment accounts: add, edit, default, archive
 - ✅ Tax rates: add, edit, default, archive (generic, no jurisdiction)
 - ✅ Workspaces (like Linear): one per business, e.g. Personal and a company. Each is its own database file with its own profile (the issuer on its invoices), clients, invoices, accounts, tax rates and numbering. Switcher at the top of the sidebar; create, rename, delete (file goes to the Trash). The pre-workspace database became the first workspace, unmoved
+- ✅ Workspace avatar: a square image (PNG, JPG, WebP, SVG ≤ 2 MB) uploaded in Settings → General, shown instead of the initials in the sidebar, switcher, command palette and assistant welcome. Stored like logos (content-addressed), referenced from `workspaces.json`, and carried in backup manifests so "restore as new" keeps it
 
 ### E2 · Clients ✅
 
@@ -209,12 +210,17 @@ Describe the work, drop in a timesheet or a screenshot of an old invoice, mentio
 **Tools**
 
 - ✅ Read: business profile, clients, invoices, saved items, tax rates, period report
-- ✅ Write, each an approval card showing exactly what will be written (client details, draft lines and total): create client, create draft invoice, update draft, save item; "Open draft" afterwards
+- ✅ Write, each an approval card showing exactly what will be written (client details, draft lines and total): create client, create draft invoice, update draft, save item; "Open" afterwards
+- ✅ Approval mode: "Ask before changes" (default) or "Make changes for me", in the prompt box and Settings → Assistant (per computer); the model is told which, and still only creates drafts
+- ✅ Steps shown as a trace (shadcn trace / AI Elements stack-trace style): one quiet line per lookup or change ("Searched clients for “Nordlys” · 1 found"), shimmering while running, opening to the details
+- ✅ Model picker for non-experts: maker logos (bundled monochrome SVGs from models.dev), plain names, three recommended picks with what they're good for, $–$$$$ instead of prices
 - ✅ Never: issuing, sending, payments, voiding and deleting stay with the user
 
 **Where it lives**
 
-- ✅ A panel on the right of every screen: ⌘J, the sidebar button, View → Assistant, and "Ask the assistant" in ⌘K (with the typed text)
+- ✅ Home (`/home`): the workspace's logo, "What are we invoicing today?", a large prompt and three compact suggestions, over a slow aurora in the palette's colours (dot grid, grain, reduced-motion aware), a greeting, and chips for what needs attention (outstanding, overdue, drafts) that fill in a prompt; the conversation then continues full width. Not connected: connect buttons and quick links instead
+- ✅ Start screen setting (Settings → Appearance, per computer): Home (default), Dashboard, Invoices, Clients or Reports opens on launch; Dashboard moved to `/dashboard`, Home is in the sidebar, ⌘K, View menu (⌘0) and G H
+- ✅ A panel on the right of every other screen: ⌘J, the sidebar button, View → Assistant, and "Ask the assistant" in ⌘K (with the typed text)
 - ✅ Settings → Assistant: providers, model, per-workspace switch, delete conversations
 - ⬜ Landing page: mention the assistant and keep "local-first" honest (the provider is the one place data goes, by choice)
 

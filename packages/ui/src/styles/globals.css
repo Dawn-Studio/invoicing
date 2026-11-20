@@ -94,3 +94,47 @@ html[data-glass="true"],
 html.dark[data-glass="true"][data-palette] {
 	--sidebar: var(--glass-tint);
 }
+
+/*
+ * Menus over a glass window: Chromium can't blur page content drawn on a transparent window
+ * (backdrop-filter only works over opaque pixels), so over the vibrancy sidebar a see-through
+ * menu showed the text underneath, sharp. Any transparency ghosts it, so menus are solid here.
+ */
+html[data-glass="true"]
+	:is(
+		[data-slot="dropdown-menu-content"],
+		[data-slot="dropdown-menu-sub-content"],
+		[data-slot="popover-content"],
+		[data-slot="select-content"],
+		[data-slot="tooltip-content"]
+	) {
+	background-color: var(--popover);
+}
+
+/* Text that shimmers while something runs (assistant tool steps). Keeps the text's colour. */
+@utility shimmer {
+	background-image: linear-gradient(
+		100deg,
+		currentColor 35%,
+		color-mix(in oklab, currentColor 25%, transparent) 50%,
+		currentColor 65%
+	);
+	background-size: 250% 100%;
+	background-clip: text;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	animation: shimmer-sweep 1.8s linear infinite;
+}
+@utility shimmer-none {
+	animation: none;
+	background-image: none;
+	-webkit-text-fill-color: currentColor;
+}
+@keyframes shimmer-sweep {
+	from {
+		background-position: 100% 0;
+	}
+	to {
+		background-position: 0% 0;
+	}
+}

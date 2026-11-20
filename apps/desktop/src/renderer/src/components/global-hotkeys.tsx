@@ -40,7 +40,8 @@ export function GlobalHotkeys() {
 	useHotkey(hotkeys["help.shortcuts"], () => setSheetOpen(true));
 	useHotkey(hotkeys["palette.open"], () => setPaletteOpen(true));
 	useHotkey(hotkeys["assistant.toggle"], assistantPanel.toggle);
-	useHotkey(hotkeys["nav.dashboard"], () => navigate("/"));
+	useHotkey(hotkeys["nav.home"], () => navigate("/home"));
+	useHotkey(hotkeys["nav.dashboard"], () => navigate("/dashboard"));
 	useHotkey(hotkeys["nav.invoices"], () => navigate("/invoices"));
 	useHotkey(hotkeys["nav.clients"], () => navigate("/clients"));
 	useHotkey(hotkeys["nav.items"], () => navigate("/items"));

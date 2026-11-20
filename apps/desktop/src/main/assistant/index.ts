@@ -92,6 +92,7 @@ export class Assistant {
 			ready,
 			enabled: this.workspaces.repos.settings.get<boolean>(ENABLED_KEY) ?? true,
 			acknowledged: prefs.acknowledged,
+			autoApprove: prefs.autoApprove,
 			model: prefs.provider === "openrouter" ? openrouterModel : prefs.models.chatgpt,
 			openrouter: {
 				connected: Boolean(credentials.openrouter),
@@ -150,6 +151,11 @@ export class Assistant {
 
 	setEnabled(enabled: boolean) {
 		this.workspaces.repos.settings.set(ENABLED_KEY, enabled);
+		return this.status();
+	}
+
+	setAutoApprove(autoApprove: boolean) {
+		setAssistantPreferences({ autoApprove });
 		return this.status();
 	}
 
@@ -232,13 +238,16 @@ export class Assistant {
 			const { model, options } = await this.model();
 			const result = streamText({
 				model,
-				instructions: instructions(repos, request.screen),
+				instructions: instructions(repos, request.screen, getAssistantPreferences().autoApprove),
 				messages: await convertToModelMessages(withContext(repos, messages), {
 					tools,
 					ignoreIncompleteToolCalls: true,
 				}),
 				tools,
-				toolApproval: Object.fromEntries(WRITE_TOOLS.map((name) => [name, "user-approval"])),
+				// Unless the user chose to let it act on its own, every change waits for approval.
+				toolApproval: getAssistantPreferences().autoApprove
+					? undefined
+					: Object.fromEntries(WRITE_TOOLS.map((name) => [name, "user-approval"])),
 				stopWhen: isStepCount(12),
 				abortSignal: controller.signal,
 				providerOptions: options,
@@ -271,7 +280,7 @@ export class Assistant {
 }
 
 /** The system prompt: who the assistant is for, what it may do, and what's on screen. */
-function instructions(repos: Repositories, screen: AssistantScreen): string {
+function instructions(repos: Repositories, screen: AssistantScreen, autoApprove: boolean): string {
 	const profile = repos.profile.get();
 	const lines = [
 		`You are the assistant inside Invoicing, a desktop invoicing app. You help ${profile?.name ?? "the user"} create and understand invoices.`,
@@ -280,7 +289,9 @@ function instructions(repos: Repositories, screen: AssistantScreen): string {
 		"How to work:",
 		"- Look things up with the tools instead of guessing. Never invent ids, clients, prices or tax rates.",
 		"- Before creating a client, search for it. Before adding tax to a line, list the tax rates.",
-		"- To create or change data, call the tool directly: the user reviews and approves each change in the app, so don't ask for confirmation in text first.",
+		autoApprove
+			? "- Changes happen immediately (the user turned off approvals). Only create or change what the user clearly asked for, and say afterwards exactly what you changed."
+			: "- To create or change data, call the tool directly: the user reviews and approves each change in the app, so don't ask for confirmation in text first.",
 		"- You can only create drafts. The user issues, sends, records payments and deletes in the app; point them there.",
 		'- Amounts and quantities are decimal strings in the invoice currency ("1250.50", "1.5").',
 		"- If something essential is missing (who to bill, what for, or a price), ask one short question.",

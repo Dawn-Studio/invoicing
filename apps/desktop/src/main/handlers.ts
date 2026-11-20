@@ -26,7 +26,14 @@ import {
 	revealExported,
 	saveExportSettings,
 } from "./pdf";
-import { getPalette, getTheme, setPalette, setTheme } from "./preferences";
+import {
+	getPalette,
+	getStartScreen,
+	getTheme,
+	setPalette,
+	setStartScreen,
+	setTheme,
+} from "./preferences";
 import { exportReport } from "./reports";
 import type { Handlers } from "./rpc";
 import type { Updates } from "./updates";
@@ -62,6 +69,11 @@ export function createHandlers(
 		"updates.install": () => updates.install(),
 		"updates.download": () => updates.openDownload(),
 		"preferences.palette": () => getPalette(),
+		"preferences.startScreen": () => getStartScreen(),
+		"preferences.setStartScreen": ({ screen }) => {
+			setStartScreen(screen);
+			return screen;
+		},
 		"preferences.setPalette": ({ palette }) => {
 			setPalette(palette);
 			return palette;
@@ -71,6 +83,11 @@ export function createHandlers(
 		"workspaces.create": ({ name }) => workspaces.create(name),
 		"workspaces.switch": ({ id }) => workspaces.switchTo(id),
 		"workspaces.rename": ({ id, name }) => workspaces.rename(id, name),
+		"workspaces.chooseAvatar": async ({ id }) => {
+			const fileName = await chooseLogo("Choose a workspace avatar");
+			return fileName ? workspaces.setAvatar(id, fileName) : null;
+		},
+		"workspaces.removeAvatar": ({ id }) => workspaces.setAvatar(id, null),
 		"workspaces.delete": ({ id }) => workspaces.remove(id),
 
 		"profile.get": () => repos().profile.get(),
@@ -184,6 +201,7 @@ export function createHandlers(
 		"assistant.setModel": ({ provider, model }) => assistant.setModel(provider, model),
 		"assistant.setEnabled": ({ enabled }) => assistant.setEnabled(enabled),
 		"assistant.acknowledge": () => assistant.acknowledge(),
+		"assistant.setAutoApprove": ({ autoApprove }) => assistant.setAutoApprove(autoApprove),
 		"assistant.chats": () => repos().assistantChats.list(),
 		"assistant.chat": ({ id }) => {
 			const chat = repos().assistantChats.find(id);

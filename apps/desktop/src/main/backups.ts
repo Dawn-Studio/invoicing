@@ -16,7 +16,7 @@ import { app, BrowserWindow, dialog, type OpenDialogOptions } from "electron";
 import { unzipSync, zipSync } from "fflate";
 import { z } from "zod";
 import type { BackupEntry, BackupPreview, BackupReason } from "../shared/contract";
-import { logosFolder } from "./files";
+import { LOGO_NAME, logosFolder } from "./files";
 
 /**
  * A backup is one zip file per workspace: a consistent SQLite snapshot (`workspace.db`), the
@@ -27,7 +27,6 @@ import { logosFolder } from "./files";
 export const BACKUP_EXTENSION = "invoicingbackup";
 const FORMAT = 1;
 const MAX_BACKUP_BYTES = 1024 * 1024 * 1024;
-const LOGO_NAME = /^[0-9a-f]{32}\.(png|jpg|webp|svg)$/;
 
 /** How many of each kind a workspace keeps; older ones are deleted. */
 const KEEP = { automatic: 14, other: 10 };
@@ -38,9 +37,15 @@ const manifestSchema = z.object({
 	appVersion: z.string(),
 	createdAt: z.number(),
 	reason: z.enum(["daily", "quit", "pre-migration", "pre-restore", "manual"]),
-	workspace: z.object({ id: z.string(), name: z.string() }),
+	workspace: z.object({
+		id: z.string(),
+		name: z.string(),
+		/** Its avatar in `logos/`; missing in backups from before avatars existed. */
+		avatarFile: z.string().regex(LOGO_NAME).nullish(),
+	}),
 });
 type Manifest = z.infer<typeof manifestSchema>;
+type BackedUpWorkspace = { id: string; name: string; avatarFile?: string | null };
 
 export const backupsRoot = () => join(app.getPath("userData"), "backups");
 export const backupsFolder = (workspaceId: string) => join(backupsRoot(), workspaceId);
@@ -71,7 +76,7 @@ const tempPath = (suffix: string) => {
  */
 export function writeBackup(
 	snapshot: (destination: string) => void,
-	workspace: { id: string; name: string },
+	workspace: BackedUpWorkspace,
 	destination: string,
 	reason: BackupReason,
 	createdAt = Date.now(),
@@ -93,7 +98,11 @@ export function writeBackup(
 			appVersion: app.getVersion(),
 			createdAt,
 			reason,
-			workspace: { id: workspace.id, name: workspace.name },
+			workspace: {
+				id: workspace.id,
+				name: workspace.name,
+				avatarFile: workspace.avatarFile ?? null,
+			},
 		};
 		files["manifest.json"] = new TextEncoder().encode(JSON.stringify(manifest, null, "\t"));
 
@@ -108,7 +117,7 @@ export function writeBackup(
 /** Backs up into the workspace's backup folder and prunes old ones of the same kind. */
 export function writeAutomaticBackup(
 	snapshot: (destination: string) => void,
-	workspace: { id: string; name: string },
+	workspace: BackedUpWorkspace,
 	reason: BackupReason,
 ) {
 	const folder = backupsFolder(workspace.id);

@@ -2,7 +2,14 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { app, nativeTheme } from "electron";
 import { z } from "zod";
-import { ASSISTANT_PROVIDERS, PALETTES, type Palette, type Theme } from "../shared/contract";
+import {
+	ASSISTANT_PROVIDERS,
+	PALETTES,
+	type Palette,
+	START_SCREENS,
+	type StartScreen,
+	type Theme,
+} from "../shared/contract";
 
 /**
  * App-wide preferences that belong to this computer rather than to a workspace: the theme,
@@ -30,12 +37,15 @@ const assistantSchema = z.object({
 		.catch({ openrouter: null, chatgpt: null }),
 	/** Saw the "what gets sent where" note. */
 	acknowledged: z.boolean().catch(false),
+	/** Make changes (clients, drafts, items) without asking first. */
+	autoApprove: z.boolean().catch(false),
 });
 export type AssistantPreferences = z.infer<typeof assistantSchema>;
 const defaultAssistant: AssistantPreferences = {
 	provider: "openrouter",
 	models: { openrouter: null, chatgpt: null },
 	acknowledged: false,
+	autoApprove: false,
 };
 
 const preferencesSchema = z.object({
@@ -43,6 +53,7 @@ const preferencesSchema = z.object({
 	palette: z.enum(PALETTES).catch("lime"),
 	window: boundsSchema.nullable().catch(null),
 	assistant: assistantSchema.catch(defaultAssistant),
+	startScreen: z.enum(START_SCREENS).catch("home"),
 });
 type Preferences = z.infer<typeof preferencesSchema>;
 
@@ -55,7 +66,13 @@ function read(): Preferences {
 	try {
 		cache = preferencesSchema.parse(JSON.parse(readFileSync(file(), "utf8")));
 	} catch {
-		cache = { theme: "system", palette: "lime", window: null, assistant: defaultAssistant };
+		cache = {
+			theme: "system",
+			palette: "lime",
+			window: null,
+			assistant: defaultAssistant,
+			startScreen: "home",
+		};
 	}
 	return cache;
 }
@@ -92,4 +109,9 @@ export const saveWindowBounds = (window: WindowBounds) => write({ window });
 export const getAssistantPreferences = () => read().assistant;
 export function setAssistantPreferences(patch: Partial<AssistantPreferences>) {
 	write({ assistant: { ...read().assistant, ...patch } });
+}
+
+export const getStartScreen = (): StartScreen => read().startScreen;
+export function setStartScreen(startScreen: StartScreen) {
+	if (startScreen !== read().startScreen) write({ startScreen });
 }

@@ -29,6 +29,10 @@ export function useRpcMutation<C extends Channel>(channel: C, invalidates: strin
 }
 
 export const useAppInfo = () => useRpcQuery("app.info");
+export const useStartScreen = () =>
+	useRpcQuery("preferences.startScreen", undefined, { staleTime: Infinity });
+export const useSetStartScreen = () =>
+	useRpcMutation("preferences.setStartScreen", ["preferences"]);
 export const useProfile = () => useRpcQuery("profile.get");
 export const useSaveProfile = () => useRpcMutation("profile.save", ["profile"]);
 export const useLogo = () => useRpcQuery("profile.logo");
@@ -75,6 +79,10 @@ export const useArchiveTaxRate = () => useRpcMutation("taxRates.archive", ["taxR
 
 export const useWorkspaces = () => useRpcQuery("workspaces.list");
 export const useRenameWorkspace = () => useRpcMutation("workspaces.rename", ["workspaces"]);
+export const useChooseWorkspaceAvatar = () =>
+	useRpcMutation("workspaces.chooseAvatar", ["workspaces"]);
+export const useRemoveWorkspaceAvatar = () =>
+	useRpcMutation("workspaces.removeAvatar", ["workspaces"]);
 
 const invoiceKeys = ["invoices", "clients", "reports"];
 export const usePayments = (id: string) => useRpcQuery("invoices.payments", { id });

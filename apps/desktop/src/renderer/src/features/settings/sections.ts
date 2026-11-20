@@ -78,7 +78,7 @@ export const SETTINGS_SECTIONS = [
 	{
 		id: "appearance",
 		label: "Appearance",
-		description: "Light or dark, and the colour palette. Applies to every workspace.",
+		description: "Light or dark, the colour palette, and the screen the app opens with.",
 		icon: SunMoon,
 		group: "app",
 	},
