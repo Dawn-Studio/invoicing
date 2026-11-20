@@ -2,15 +2,6 @@ import { type InvoiceSummary, todayIso } from "@dawnstudio/core";
 import { UnitTag } from "@dawnstudio/ui/components/amount";
 import { Button } from "@dawnstudio/ui/components/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuLabel,
-	DropdownMenuRadioGroup,
-	DropdownMenuRadioItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@dawnstudio/ui/components/dropdown-menu";
-import {
 	Empty,
 	EmptyContent,
 	EmptyDescription,
@@ -27,7 +18,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
 	Calendar,
 	Check,
-	ChevronDown,
 	CircleCheck,
 	Coins,
 	FileDown,
@@ -37,9 +27,10 @@ import {
 	Users,
 	X,
 } from "lucide-react";
-import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
+import { FilterMenu } from "../../components/filter-menu";
 import { Page, PageSection } from "../../components/page";
 import { Shortcut } from "../../components/shortcut";
 import { formatAmount, formatIsoDate } from "../../lib/format";
@@ -525,55 +516,5 @@ function ListRow({
 			</span>
 			<UnitTag className="shrink-0">{invoice.currency}</UnitTag>
 		</li>
-	);
-}
-
-function FilterMenu({
-	icon,
-	label,
-	active,
-	value,
-	onChange,
-	options,
-	anyLabel,
-}: {
-	icon: ReactNode;
-	label: string;
-	active: boolean;
-	value: string;
-	onChange: (value: string) => void;
-	options: { value: string; label: string }[];
-	anyLabel: string;
-}) {
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button
-					variant="outline"
-					size="sm"
-					className={cn("max-w-52 font-normal", active && "border-brand-ink/40 text-foreground")}
-				>
-					{icon}
-					<span className="truncate">{label}</span>
-					<ChevronDown className="text-muted-foreground" />
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="start" className="max-h-80 min-w-48">
-				<DropdownMenuRadioGroup value={value} onValueChange={onChange}>
-					<DropdownMenuRadioItem value="">{anyLabel}</DropdownMenuRadioItem>
-					{options.length > 0 ? <DropdownMenuSeparator /> : null}
-					{options.length === 0 ? (
-						<DropdownMenuLabel className="font-normal text-muted-foreground">
-							None yet
-						</DropdownMenuLabel>
-					) : null}
-					{options.map((option) => (
-						<DropdownMenuRadioItem key={option.value} value={option.value}>
-							{option.label}
-						</DropdownMenuRadioItem>
-					))}
-				</DropdownMenuRadioGroup>
-			</DropdownMenuContent>
-		</DropdownMenu>
 	);
 }

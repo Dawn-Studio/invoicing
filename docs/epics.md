@@ -45,6 +45,7 @@ Never retype a client's details.
 - ✅ Client's invoice list with Open / Overdue / Paid / Void status (rows link to invoices once E3 adds the invoice page)
 - ✅ Other contacts per client (name + email), to be CC'd on invoice emails (E6)
 - ✅ Import clients from CSV: comma/semicolon/tab, common header names, per-row errors, existing names skipped
+- ✅ Client list as a table like the invoice list: tabs (Active, Owing, Overdue, Archived, All) with counts, search (/), currency filter, per-client invoices / last invoiced / outstanding (red when overdue), J/K and Enter, selection with bulk archive or restore (A)
 
 ### E3 · Invoice editor ✅
 
